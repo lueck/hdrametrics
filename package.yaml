@@ -1,0 +1,57 @@
+name:                hdrametrics
+version:             0.1.0.0
+github:              "githubuser/hdrametrics"
+license:             BSD3
+author:              "Christian Lück"
+maintainer:          "christian.lueck@rub.de"
+copyright:           "2020 Christian Lück"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Metrics for dramatic plays
+# category:            Text
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/githubuser/hdrametrics#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- containers
+
+library:
+  source-dirs: src
+
+executables:
+  hdrametrics:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - hdrametrics
+    - hdracor
+    - http-conduit
+    - conduit
+    - resourcet
+    - bytestring
+    - text
+    - optparse-applicative
+
+
+tests:
+  hdrametrics-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - hdrametrics

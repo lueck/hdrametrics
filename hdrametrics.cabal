@@ -1,0 +1,73 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 445434184c9ecdedc71796020297ecb8e4b8f1492af100bf7b74d3f72796b153
+
+name:           hdrametrics
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/hdrametrics#readme>
+homepage:       https://github.com/githubuser/hdrametrics#readme
+bug-reports:    https://github.com/githubuser/hdrametrics/issues
+author:         Christian Lück
+maintainer:     christian.lueck@rub.de
+copyright:      2020 Christian Lück
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/hdrametrics
+
+library
+  exposed-modules:
+      Lib
+      Text.DraCor.Concomitance
+  other-modules:
+      Paths_hdrametrics
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+    , containers
+  default-language: Haskell2010
+
+executable hdrametrics
+  main-is: Main.hs
+  other-modules:
+      Paths_hdrametrics
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , conduit
+    , containers
+    , hdracor
+    , hdrametrics
+    , http-conduit
+    , optparse-applicative
+    , resourcet
+    , text
+  default-language: Haskell2010
+
+test-suite hdrametrics-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_hdrametrics
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , hdrametrics
+  default-language: Haskell2010
