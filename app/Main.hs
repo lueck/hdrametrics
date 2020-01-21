@@ -11,6 +11,8 @@ import qualified Data.Text as T
 import Control.Concurrent
 import Data.List
 import System.IO
+import Data.Aeson
+import qualified Data.Csv as Csv
 
 import Text.DraCor.Types
 import Text.DraCor.API
@@ -21,15 +23,21 @@ data Opts = Opts
   { url :: String
   , corpus :: String
   , play :: String
+  , outpt :: Output
   , comnd :: Command
   }
 
+data Output = Raw | JSON --  | CSV
+
 data Command = Concomitance
   { concMaxCardinalNum :: Int
-  , concLowerBoundThreshold :: Float
-  , concUpperBoundThreshold :: Float
+  , concLowerBoundConc :: Float
+  , concUpperBoundConc :: Float
+  , concSortedBy :: SortOrder
   }
   
+data SortOrder = NoSort | MetricOrder | CardinalityOrder
+
 
 opts_ :: Parser Opts
 opts_ = Opts
@@ -46,9 +54,24 @@ opts_ = Opts
                  <> short 'p'
                  <> help "The identifier of the play."
                  <> metavar "PLAY")
+  <*> ((flag Raw Raw
+        (long "raw"
+         <> help "Raw haskell output"))
+       <|>
+       (flag' JSON
+        (long "json"
+         <> help "JSON output"))
+       -- <|>
+       -- (flag' CSV
+       --  (long "csv"
+       --   <> help "CSV output"))
+      )
   <*> subparser
-  (command "concomitance" (info (helper <*> concomitance_)
-                           (progDesc "Calculate concomitance measures")))
+  (command "concomitance"
+   (info (helper <*> concomitance_)
+     (header "hdrametrics concomitance -- calculate concomitance measures"
+      <> progDesc "Calculate concomitance measures for each pair of characters of a play or even for sets of characters with a cardinality number bigger than 2."
+      <> footer "A list of concomitant characters following the notion of Solomon Marcus can be generated with these options: \"-c 2 -l 1.0\" A list of complementary characters following his notion can be generated with these options: \"-c 2 -u 0.0\"")))
 
 concomitance_ :: Parser Command
 concomitance_ = Concomitance
@@ -60,15 +83,30 @@ concomitance_ = Concomitance
   <*> option auto (long "lowerbound"
                    <> short 'l'
                    <> help "Lower bound threshold for the output. Character sets with a concomitance lower than this threshold will be removed from the output."
-                   <> metavar "LOWERBOUND"
+                   <> metavar "CONCOMITANCE"
                    <> value 0.0
                    <> showDefault)
   <*> option auto (long "upperbound"
                    <> short 'u'
                    <> help "Upper bound threshold for the output. Character sets with a concomitance bigger than this threshold will be removed from the output."
-                   <> metavar "UPPERBOUND"
+                   <> metavar "CONCOMITANCE"
                    <> value 1.0
                    <> showDefault)
+  <*> sortOrder_
+
+sortOrder_ :: Parser SortOrder
+sortOrder_ =
+  (flag NoSort NoSort
+   (long "nosort"
+    <> help "Do not sort output, i.e. preserve order of occurence in the play. (default)"))
+  <|>
+  (flag' CardinalityOrder
+   (long "cardinality"
+    <> help "Sort output by the cardinality number of the set of characters."))
+  <|>
+  (flag' MetricOrder
+   (long "metric"
+    <> help "Sort output by the metric's value."))
 
 main = execParser opts >>= run
   where opts = info (helper <*> opts_)
@@ -90,7 +128,7 @@ fetch :: Opts -> (String -> IO B.ByteString)
 fetch opts = fetch' $ url opts
 
 run :: Opts -> IO ()
-run gOpts@(Opts _ _ _ cOpts@(Concomitance _ _ _)) = concomitancePlay gOpts cOpts
+run gOpts@(Opts _ _ _ _ cOpts@(Concomitance _ _ _ _)) = concomitancePlay gOpts cOpts
 
 concomitancePlay :: Opts -> Command -> IO ()
 concomitancePlay gOpts cOpts = do
@@ -104,9 +142,22 @@ concomitancePlay gOpts cOpts = do
           characterSets = filter ((\l -> l>=2 && l<=(concMaxCardinalNum cOpts)) . length) $
             subsequences characters
           concomitanceValues = foldPlayWith concomitanceP characterSets scenes
-          output = filter ((\v -> v >= (concLowerBoundThreshold cOpts) &&
-                                  v <= (concUpperBoundThreshold cOpts)) . snd) concomitanceValues
+          out = sortBy (concSortedBy cOpts) $ -- sortOn (sortOrder $ concSortedBy cOpts) $
+            filter ((\v -> v >= (concLowerBoundConc cOpts) &&
+                           v <= (concUpperBoundConc cOpts)) . snd) concomitanceValues
       hPutStrLn stderr $ "Count of scenes: " ++ (show $ length scenes)
-      mapM print output
-      return ()
-      
+      output gOpts out
+  where
+    sortBy MetricOrder = sortOn snd
+    sortBy CardinalityOrder = sortOn (length . fst)
+    sortBy _ = id
+
+-- | Format the output
+output :: (ToJSON a, Show a) => Opts -> [a] -> IO ()
+output (Opts _ _ _ Raw _) vals = do
+  mapM print vals
+  return ()
+output (Opts _ _ _ JSON _) vals = do
+  print (toJSON vals)
+-- output (Opts _ _ _ CSV _) vals = do
+--   print vals

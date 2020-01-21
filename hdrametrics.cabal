@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 445434184c9ecdedc71796020297ecb8e4b8f1492af100bf7b74d3f72796b153
+-- hash: f25cdcbee875b9e0ce7590807f63ad61334c87b89e0731f6ac9b16db87b40843
 
 name:           hdrametrics
 version:        0.1.0.0
@@ -46,8 +46,10 @@ executable hdrametrics
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
     , bytestring
+    , cassava
     , conduit
     , containers
     , hdracor
