@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f25cdcbee875b9e0ce7590807f63ad61334c87b89e0731f6ac9b16db87b40843
+-- hash: d531b3f2f5275345a7ea48c0216fe69ce7ca945fc5c96388f51c905ce841a6b1
 
 name:           hdrametrics
 version:        0.1.0.0
@@ -35,7 +35,8 @@ library
       src
   build-depends:
       base >=4.7 && <5
-    , containers
+    , hashable
+    , unordered-containers
   default-language: Haskell2010
 
 executable hdrametrics
@@ -51,13 +52,14 @@ executable hdrametrics
     , bytestring
     , cassava
     , conduit
-    , containers
+    , hashable
     , hdracor
     , hdrametrics
     , http-conduit
     , optparse-applicative
     , resourcet
     , text
+    , unordered-containers
   default-language: Haskell2010
 
 test-suite hdrametrics-test
@@ -70,6 +72,7 @@ test-suite hdrametrics-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
-    , containers
+    , hashable
     , hdrametrics
+    , unordered-containers
   default-language: Haskell2010
