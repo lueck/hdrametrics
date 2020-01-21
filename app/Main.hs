@@ -33,18 +33,21 @@ data Command = Concomitance
   { concMaxCardinalNum :: Int
   , concLowerBoundConc :: Float
   , concUpperBoundConc :: Float
+  , concAbsoluteValues :: Bool
   , concSortedBy :: SortOrder
   }
   | Dominance
   { concMaxCardinalNum :: Int
   , concLowerBoundConc :: Float
   , concUpperBoundConc :: Float
+  , concAbsoluteValues :: Bool
   , concSortedBy :: SortOrder
   }
   | Cooccurrence
   { concMaxCardinalNum :: Int
   , concLowerBoundConc :: Float
   , concUpperBoundConc :: Float
+  , concAbsoluteValues :: Bool
   , concSortedBy :: SortOrder
   }
   
@@ -97,7 +100,7 @@ opts_ = Opts
       <> progDesc "Calculate cooccurence measures for each pair of characters of a play or even for an set of characters with an arbitrary cardinality number. It is normalized by division by the count of scenes in the play."))
   )
 
-concomitanceLike_ :: String -> (Int -> Float -> Float -> SortOrder -> Command) -> Parser Command
+concomitanceLike_ :: String -> (Int -> Float -> Float -> Bool -> SortOrder -> Command) -> Parser Command
 concomitanceLike_ helpStr constructor = constructor
   <$> option auto (long "maxcard"
                    <> short 'c'
@@ -116,6 +119,8 @@ concomitanceLike_ helpStr constructor = constructor
                    <> metavar "CONCOMITANCE"
                    <> value 1.0
                    <> showDefault)
+  <*> switch (long "absolute"
+              <> help "Output absolute frequency instead of normalized values. You will have to adjust the --upperbound option in combination with this.")
   <*> sortOrder_
 
 sortOrder_ :: Parser SortOrder
@@ -152,11 +157,11 @@ fetch :: Opts -> (String -> IO B.ByteString)
 fetch opts = fetch' $ url opts
 
 run :: Opts -> IO ()
-run gOpts@(Opts _ _ _ _ cOpts@(Concomitance _ _ _ _)) =
+run gOpts@(Opts _ _ _ _ cOpts@(Concomitance _ _ _ _ _)) =
   concomitanceLikePlay concomitanceP gOpts cOpts
-run gOpts@(Opts _ _ _ _ cOpts@(Dominance _ _ _ _)) =
+run gOpts@(Opts _ _ _ _ cOpts@(Dominance _ _ _ _ _)) =
   concomitanceLikePlay dominanceP gOpts cOpts
-run gOpts@(Opts _ _ _ _ cOpts@(Cooccurrence _ _ _ _)) =
+run gOpts@(Opts _ _ _ _ cOpts@(Cooccurrence _ _ _ _ _)) =
   concomitanceLikePlay cooccurrenceP gOpts cOpts
 
 -- concomitanceLikePlay :: Eq a => ([a] -> [a] -> Bool) -> Opts -> Command -> IO ()
@@ -175,7 +180,9 @@ concomitanceLikePlay predicate gOpts cOpts = do
           concomitanceValues = foldPlayWith predicate characterSets scenes
           out = sortBy (concSortedBy cOpts) $ -- sortOn (sortOrder $ concSortedBy cOpts) $
             filter ((\v -> v >= (concLowerBoundConc cOpts) &&
-                           v <= (concUpperBoundConc cOpts)) . snd) concomitanceValues
+                           v <= (concUpperBoundConc cOpts)) . snd) $
+            map (mkAbsoluteValues (concAbsoluteValues cOpts) (fromIntegral $ length scenes)) -- mk absolute values
+            concomitanceValues
       hPutStrLn stderr $ "Found scenes: " ++ (show $ length scenes)
       hPutStrLn stderr $ "Found characters: " ++ (show $ length characters)
       hPutStrLn stderr $ "Size of generated powerset of characters: " ++ (show $ length characterSets)
@@ -188,6 +195,9 @@ concomitanceLikePlay predicate gOpts cOpts = do
     longerThanOne [] = False
     longerThanOne (_:[]) = False
     longerThanOne _ = True
+    mkAbsoluteValues :: Fractional i => Bool -> i -> (([a], i) -> ([a], i))
+    mkAbsoluteValues True l = (\(cs, v) -> (cs, v*l))
+    mkAbsoluteValues _ _ = id
 
 -- | Format the output
 output :: (ToJSON a, Show a) => Opts -> [a] -> IO ()
