@@ -12,7 +12,7 @@ import Control.Concurrent
 import Data.List
 import System.IO
 import Data.Aeson
-import qualified Data.Csv as Csv
+-- import qualified Data.Csv as Csv
 
 import Text.DraCor.Types
 import Text.DraCor.API
@@ -30,6 +30,18 @@ data Opts = Opts
 data Output = Raw | JSON --  | CSV
 
 data Command = Concomitance
+  { concMaxCardinalNum :: Int
+  , concLowerBoundConc :: Float
+  , concUpperBoundConc :: Float
+  , concSortedBy :: SortOrder
+  }
+  | Dominance
+  { concMaxCardinalNum :: Int
+  , concLowerBoundConc :: Float
+  , concUpperBoundConc :: Float
+  , concSortedBy :: SortOrder
+  }
+  | Cooccurrence
   { concMaxCardinalNum :: Int
   , concLowerBoundConc :: Float
   , concUpperBoundConc :: Float
@@ -68,13 +80,25 @@ opts_ = Opts
       )
   <*> subparser
   (command "concomitance"
-   (info (helper <*> concomitance_)
+   (info (helper <*> (concomitanceLike_ "concomitance" Concomitance))
      (header "hdrametrics concomitance -- calculate concomitance measures"
       <> progDesc "Calculate concomitance measures for each pair of characters of a play or even for sets of characters with a cardinality number bigger than 2."
-      <> footer "A list of concomitant characters following the notion of Solomon Marcus can be generated with these options: \"-c 2 -l 1.0\" A list of complementary characters following his notion can be generated with these options: \"-c 2 -u 0.0\"")))
+      <> footer "A list of concomitant characters following the notion of Solomon Marcus can be generated with these options: \"-c 2 -l 1.0\" A list of complementary characters following his notion can be generated with these options: \"-c 2 -u 0.0\""))
+   --
+   <> command "dominance"
+   (info (helper <*> (concomitanceLike_ "dominance" Dominance))
+     (header "hdrametrics dominance -- calculate dominance measures"
+      <> progDesc "Calculate dominance measures for each character over each other character or even over a set of characters of a play"
+      <> footer "A list of dominant characters over other characters following Solomon Marcus can be generated with these options: \"-c 2 -l 1.0\""))
+   --
+   <> command "cooccurrence"
+   (info (helper <*> (concomitanceLike_ "cooccurrence" Cooccurrence))
+     (header "hdrametrics cooccurrence -- calculate cooccurence measures"
+      <> progDesc "Calculate cooccurence measures for each pair of characters of a play or even for an set of characters with an arbitrary cardinality number. It is normalized by division by the count of scenes in the play."))
+  )
 
-concomitance_ :: Parser Command
-concomitance_ = Concomitance
+concomitanceLike_ :: String -> (Int -> Float -> Float -> SortOrder -> Command) -> Parser Command
+concomitanceLike_ helpStr constructor = constructor
   <$> option auto (long "maxcard"
                    <> short 'c'
                    <> help "Maximal cardinal number of a character set for which the concomitance is calculated. This must be an integer value. A value of 2 will calculate the concomitance for all pairs of characters. If this option is left, the concomitance is calculated for all sets in the power set of the set of characters, for which the cardinality equals or exceeds 2."
@@ -112,9 +136,9 @@ main = execParser opts >>= run
   where opts = info (helper <*> opts_)
           (fullDesc
            <> progDesc
-           "drametrics calculates a metric for a dramatic text."
+           "hdrametrics calculates metrics of a dramatic text."
            <> header
-           "drametrics - calculate metrics for a dramatic text.")
+           "hdrametrics - calculate metrics of a dramatic text.")
 
 
 fetch' :: String -> String -> IO B.ByteString
@@ -128,10 +152,15 @@ fetch :: Opts -> (String -> IO B.ByteString)
 fetch opts = fetch' $ url opts
 
 run :: Opts -> IO ()
-run gOpts@(Opts _ _ _ _ cOpts@(Concomitance _ _ _ _)) = concomitancePlay gOpts cOpts
+run gOpts@(Opts _ _ _ _ cOpts@(Concomitance _ _ _ _)) =
+  concomitanceLikePlay concomitanceP gOpts cOpts
+run gOpts@(Opts _ _ _ _ cOpts@(Dominance _ _ _ _)) =
+  concomitanceLikePlay dominanceP gOpts cOpts
+run gOpts@(Opts _ _ _ _ cOpts@(Cooccurrence _ _ _ _)) =
+  concomitanceLikePlay cooccurrenceP gOpts cOpts
 
-concomitancePlay :: Opts -> Command -> IO ()
-concomitancePlay gOpts cOpts = do
+-- concomitanceLikePlay :: Eq a => ([a] -> [a] -> Bool) -> Opts -> Command -> IO ()
+concomitanceLikePlay predicate gOpts cOpts = do
   ply' <- getPlay (fetch gOpts) (corpus gOpts) (play gOpts)
   case ply' of
     Nothing -> do
@@ -139,18 +168,26 @@ concomitancePlay gOpts cOpts = do
     Just ply -> do
       let scenes = map scnSpeakers $ plySegments ply
           characters = nub $ concat scenes
-          characterSets = filter ((\l -> l>=2 && l<=(concMaxCardinalNum cOpts)) . length) $
-            subsequences characters
-          concomitanceValues = foldPlayWith concomitanceP characterSets scenes
+          -- characterSets = filter ((\l -> l>=2 && l<=(concMaxCardinalNum cOpts)) . length) $
+          --   subsequences characters
+          characterSets = filter longerThanOne $
+            subsequencesOfSize (concMaxCardinalNum cOpts) characters
+          concomitanceValues = foldPlayWith predicate characterSets scenes
           out = sortBy (concSortedBy cOpts) $ -- sortOn (sortOrder $ concSortedBy cOpts) $
             filter ((\v -> v >= (concLowerBoundConc cOpts) &&
                            v <= (concUpperBoundConc cOpts)) . snd) concomitanceValues
-      hPutStrLn stderr $ "Count of scenes: " ++ (show $ length scenes)
+      hPutStrLn stderr $ "Found scenes: " ++ (show $ length scenes)
+      hPutStrLn stderr $ "Found characters: " ++ (show $ length characters)
+      hPutStrLn stderr $ "Size of generated powerset of characters: " ++ (show $ length characterSets)
       output gOpts out
   where
     sortBy MetricOrder = sortOn snd
     sortBy CardinalityOrder = sortOn (length . fst)
     sortBy _ = id
+    longerThanOne :: [a] -> Bool
+    longerThanOne [] = False
+    longerThanOne (_:[]) = False
+    longerThanOne _ = True
 
 -- | Format the output
 output :: (ToJSON a, Show a) => Opts -> [a] -> IO ()
