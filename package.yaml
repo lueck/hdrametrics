@@ -39,14 +39,25 @@ executables:
     - hdrametrics
     - hdracor
     - http-conduit
-    - conduit
-    - resourcet
     - bytestring
     - text
     - optparse-applicative
     - aeson
-    - cassava
-
+    - containers
+  hdrametrics-bench:
+    main:                Main.hs
+    source-dirs:         bench
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - hdrametrics
+    - hdracor
+    - criterion
+    - http-conduit
+    - bytestring
+    - containers
 
 tests:
   hdrametrics-test:

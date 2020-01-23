@@ -2,8 +2,6 @@ module Main where
 
 import Options.Applicative
 import Network.HTTP.Conduit
-import Conduit (runConduit)
-import Control.Monad.Trans.Resource (runResourceT)
 import qualified Data.ByteString.Lazy as B
 import Control.Monad
 import Data.Maybe
@@ -12,7 +10,7 @@ import Control.Concurrent
 import Data.List
 import System.IO
 import Data.Aeson
--- import qualified Data.Csv as Csv
+import qualified Data.IntMap as IntMap
 
 import Text.DraCor.Types
 import Text.DraCor.API
@@ -177,11 +175,20 @@ concomitanceLikePlay predicate gOpts cOpts = do
           --   subsequences characters
           characterSets = filter longerThanOne $
             subsequencesOfSize (concMaxCardinalNum cOpts) characters
-          concomitanceValues = foldPlayWith predicate characterSets scenes
+          -- mapping of strings to integers
+          characterIntTuples = zip [1..] characters
+          getInt c = fst $ head $ filter ((==c) . snd) characterIntTuples
+          characterMap = IntMap.fromList $ characterIntTuples
+          sceneInts = map (map getInt) scenes
+          intSets = filter longerThanOne $
+            subsequencesOfSize (concMaxCardinalNum cOpts) [1..(length characters)]
+          -- calculate
+          concomitanceValues = foldPlayWith predicate intSets sceneInts
           out = sortBy (concSortedBy cOpts) $ -- sortOn (sortOrder $ concSortedBy cOpts) $
             filter ((\v -> v >= (concLowerBoundConc cOpts) &&
                            v <= (concUpperBoundConc cOpts)) . snd) $
-            map (mkAbsoluteValues (concAbsoluteValues cOpts) (fromIntegral $ length scenes)) -- mk absolute values
+            map ((mkAbsoluteValues (concAbsoluteValues cOpts) (fromIntegral $ length scenes)) . -- mk absolute values
+                 (\(is, v) -> ((map (characterMap IntMap.!) is), v)))
             concomitanceValues
       hPutStrLn stderr $ "Found scenes: " ++ (show $ length scenes)
       hPutStrLn stderr $ "Found characters: " ++ (show $ length characters)

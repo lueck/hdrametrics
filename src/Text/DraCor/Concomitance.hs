@@ -1,5 +1,6 @@
 module Text.DraCor.Concomitance
   ( foldPlayWith
+  , foldPlayWith'
   , concomitanceP
   , dominanceP
   , cooccurrenceP
@@ -61,26 +62,48 @@ cooccurrenceP a b = (length (a `union` b) == (length a))
 -- | Calculate the metrics based on a given predicate. This is
 -- essentially a fold on the scenes of the play.
 foldPlayWith
-  :: (Hashable a, Ord a, Fractional i) =>
+  :: (Fractional i) =>
      ([a] -> [a] -> Bool) -- ^ metrics predicate
   -> [[a]] -- ^ set of character sets for which to calculate the metric
   -> [[a]] -- ^ scenes with present characters
   -> [([a], i)]
 foldPlayWith p charSet scenes =
-  Map.toList $ -- return a list of tuples
-  Map.map (\v -> (fromIntegral v) / (fromIntegral $ length scenes)) $ -- devide by count of scenes
-  foldl (mapSceneWith p) -- fold using mapSceneWith as accumulator function
-  (Map.fromList $ map (\k -> (k, 0)) charSet) -- init fold with Map of zeros
-  scenes -- fold over scenes
+  map (\(k, v) -> (k, (fromIntegral v)/(fromIntegral $ length scenes))) $
+  foldl (mapSceneWith p) (map (\k -> (k,0)) charSet) scenes
 
 -- | Map an incrementor function based on a predicate over the
 -- character sets, do this for a specific scene.
 mapSceneWith
   :: ([a] -> [a] -> Bool)       -- ^ predicate for the metric
+  -> [([a], Int)]               -- ^ accumulator
+  -> [a]                        -- ^ characters in new scene
+  -> [([a], Int)]
+mapSceneWith p acc scene = map (\(k, v) -> (k, (v + (fromEnum $ p scene k)))) acc
+
+
+-- | Same as 'foldPlayWith', but based on hashmap, which is not
+-- needed, because we do not lookup anything, but instead map over the
+-- whole hashmap. So this is not faster, but a magnitude slower.
+foldPlayWith'
+  :: (Hashable a, Ord a, Fractional i) =>
+     ([a] -> [a] -> Bool) -- ^ metrics predicate
+  -> [[a]] -- ^ set of character sets for which to calculate the metric
+  -> [[a]] -- ^ scenes with present characters
+  -> [([a], i)]
+foldPlayWith' p charSet scenes =
+  Map.toList $ -- return a list of tuples
+  Map.map (\v -> (fromIntegral v) / (fromIntegral $ length scenes)) $ -- devide by count of scenes
+  foldl (mapSceneWith' p) -- fold using mapSceneWith as accumulator function
+  (Map.fromList $ map (\k -> (k, 0)) charSet) -- init fold with Map of zeros
+  scenes -- fold over scenes
+
+mapSceneWith'
+  :: ([a] -> [a] -> Bool)       -- ^ predicate for the metric
   -> Map.HashMap [a] Int            -- ^ accumulator
   -> [a]                        -- ^ characters in new scene
   -> Map.HashMap [a] Int
-mapSceneWith p acc scene = Map.mapWithKey (\k v -> v + (fromEnum $ p scene k)) acc
+mapSceneWith' p acc scene = Map.mapWithKey (\k v -> v + (fromEnum $ p scene k)) acc
+
 
 
 -- * Helper function for generating powersets
