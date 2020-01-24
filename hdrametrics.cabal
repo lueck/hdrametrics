@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f5ecbdca46aa8ef89bd4ad68d58f792fe61671f42e0acd386bb21cb2ae70e565
+-- hash: 1b6558d6c0dc4f7e33d4cbe370a011adce7a31379cf9676944316ff1c9767ba8
 
 name:           hdrametrics
 version:        0.1.0.0
@@ -50,6 +50,7 @@ executable hdrametrics
       aeson
     , base >=4.7 && <5
     , bytestring
+    , cassava
     , containers
     , hashable
     , hdracor
@@ -58,6 +59,7 @@ executable hdrametrics
     , optparse-applicative
     , text
     , unordered-containers
+    , vector
   default-language: Haskell2010
 
 executable hdrametrics-bench

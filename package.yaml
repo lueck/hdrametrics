@@ -44,6 +44,8 @@ executables:
     - optparse-applicative
     - aeson
     - containers
+    - cassava
+    - vector
   hdrametrics-bench:
     main:                Main.hs
     source-dirs:         bench
