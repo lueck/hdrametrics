@@ -67,18 +67,11 @@ foldPlayWith
   -> [[a]] -- ^ set of character sets for which to calculate the metric
   -> [[a]] -- ^ scenes with present characters
   -> [([a], i)]
-foldPlayWith p charSet scenes =
-  map (\(k, v) -> (k, (fromIntegral v)/(fromIntegral $ length scenes))) $
-  foldl (mapSceneWith p) (map (\k -> (k,0)) charSet) scenes
-
--- | Map an incrementor function based on a predicate over the
--- character sets, do this for a specific scene.
-mapSceneWith
-  :: ([a] -> [a] -> Bool)       -- ^ predicate for the metric
-  -> [([a], Int)]               -- ^ accumulator
-  -> [a]                        -- ^ characters in new scene
-  -> [([a], Int)]
-mapSceneWith p acc scene = map (\(k, v) -> (k, (v + (fromEnum $ p scene k)))) acc
+foldPlayWith p charSets scenes =
+  map (\(cs, v) -> (cs, (fromIntegral v)/(fromIntegral $ length scenes))) $
+  foldl incInScene (map (\cs -> (cs,0)) charSets) scenes
+  where
+    incInScene acc scene = map (\(cs, v) -> (cs, (v + (fromEnum $ p scene cs)))) acc
 
 
 -- | Same as 'foldPlayWith', but based on hashmap, which is not
@@ -106,7 +99,7 @@ mapSceneWith' p acc scene = Map.mapWithKey (\k v -> v + (fromEnum $ p scene k)) 
 
 
 
--- * Helper function for generating powersets
+-- * Helper function for generating powersets represented with lists
 
 -- | Return the list of all subsequences of the list given as second
 -- argument, with length lower or equal the first argument.
