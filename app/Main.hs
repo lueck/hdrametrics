@@ -224,7 +224,7 @@ concomitanceLikePlay predicate gOpts cOpts = do
       out = sortBy (concSortedBy cOpts) $ -- sortOn (sortOrder $ concSortedBy cOpts) $
         filter ((\v -> v >= (concLowerBoundConc cOpts) &&
                        v <= (concUpperBoundConc cOpts)) . snd) $
-        map ((mkAbsoluteValues (concAbsoluteValues cOpts) (fromIntegral $ length scns)) . -- mk absolute values
+        map ((mkAbsoluteValues (concAbsoluteValues cOpts) (fromIntegral $ length scns)) .
              (\(is, v) -> ((map (characterMap IntMap.!) is), v)))
         concomitanceValues
   hPutStrLn stderr $ "Found scenes: " ++ (show $ length scns)
@@ -245,15 +245,15 @@ concomitanceLikePlay predicate gOpts cOpts = do
 
 -- | Format the output
 output :: (ToJSON a, Csv.ToField a, Show a,
-           ToJSON i, Csv.ToField i, Show i, Fractional i) =>
+           ToJSON i, Csv.ToField i, Show i) =>
           Opts -> [([a], i)] -> IO ()
 output (Opts _ Raw _) vals = do
   mapM_ print vals
 output (Opts _ JSON _) vals = do
   print (toJSON vals)
 output (Opts _ CSV _) vals = do
-  -- We can only encode list of characters with fixed length, so we
-  -- take 2, only!
+  -- We can only encode character sets of fixed cardinality to CSV, so
+  -- we take 2 (pairs), only!
   B.putStr $
     Csv.encode $
     map (\(cs, v) -> (head cs, head $ tail cs, v)) vals
