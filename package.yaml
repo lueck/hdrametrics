@@ -46,6 +46,8 @@ executables:
     - containers
     - cassava
     - vector
+
+benchmarks:
   hdrametrics-bench:
     main:                Main.hs
     source-dirs:         bench
