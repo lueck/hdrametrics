@@ -178,7 +178,9 @@ prop_concomitanceP a b =
 prop_dominanceP :: [Int] -> [Int] -> Bool
 prop_dominanceP a b =
   if (length b < 1) then discard else
-    dominanceP a b == dominanceP' a b
+    (dominanceP a b == dominanceP' a b &&
+     dominanceP a b == dominanceP'' a b &&
+     dominanceP' a b == dominanceP'' a b)
 
 prop_cooccurrenceP :: [Int] -> [Int] -> Bool
 prop_cooccurrenceP a b =

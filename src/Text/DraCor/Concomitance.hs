@@ -6,6 +6,7 @@ module Text.DraCor.Concomitance
   , concomitanceP''
   , dominanceP
   , dominanceP'
+  , dominanceP''
   , cooccurrenceP
   , cooccurrenceP'
   , subsequencesOfSize
@@ -61,14 +62,20 @@ dominanceP
   -> [a]            -- ^ set of characters to calculate the metric for
   -> Bool
 dominanceP scene set =
+  (head set) `elem` scene ||
+  nonePresent scene set
+
+-- | Same as 'dominanceP', but with more explicit conditions.
+dominanceP' :: (Eq a) => [a] -> [a] -> Bool
+dominanceP' scene set =
   ((head set) `elem` scene && nonePresent scene (tail set)) ||
   ((head set) `elem` scene && any (`elem` scene) (tail set)) ||
   allPresent scene set ||
   nonePresent scene set
 
 -- | Same as 'dominanceP', but implemented with set unions and intersections.
-dominanceP'  :: (Eq a) => [a] -> [a] -> Bool
-dominanceP' a b =
+dominanceP''  :: (Eq a) => [a] -> [a] -> Bool
+dominanceP'' a b =
   (length (a `union` b) == (length a)) ||
   ((head b) `elem` a && any (`elem` a) (tail b)) ||
   (((head b) `elem` a) && (length (a `intersect` (tail b)) ==0)) ||
