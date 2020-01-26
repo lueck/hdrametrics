@@ -53,25 +53,35 @@ main = do
       hPutStrLn stderr $ "Found characters: " ++ (show $ length characters)
       hPutStrLn stderr $ "Size of generated powerset of characters: " ++ (show $ length characterSets)
       defaultMain
-        [ bgroup "foldPlayWith" [
-            bench "length" $
+        [ bgroup "implementations of foldPlayWith"
+          [
+            bench "foldPlayWith" $
             whnf (length . (uncurry (foldPlayWith concomitanceP)))
             (characterSets, scenes)
-            ]
-        , bgroup "foldPlayWith'" [
-            bench "length" $
-              whnf (length . (uncurry (foldPlayWith' concomitanceP)))
-              (characterSets, scenes)
-            ]
-        , bgroup "foldPlayWith on integers" [
-            bench "length" $
+          , bench "foldPlayWith'" $
+            whnf (length . (uncurry (foldPlayWith' concomitanceP)))
+            (characterSets, scenes)
+          ]
+        , bgroup "foldPlayWith on text or integers"
+          [
+            bench "text" $
+            whnf (length . (uncurry (foldPlayWith concomitanceP)))
+            (characterSets, scenes)
+          , bench "integers" $
             whnf (length . (uncurry (foldPlayWith concomitanceP)))
             (intSets, sceneInts)
-            ]
-        , bgroup "foldPlayWith' on integers" [
-            bench "length" $
-              whnf (length . (uncurry (foldPlayWith' concomitanceP)))
-              (intSets, sceneInts)
+          ]
+        , bgroup "implementations of the concomitance-predicate"
+          [
+            bench "concomitanceP" $
+            whnf (length . (uncurry (foldPlayWith concomitanceP)))
+            (intSets, sceneInts)
+          , bench "concomitanceP'" $
+            whnf (length . (uncurry (foldPlayWith concomitanceP')))
+            (intSets, sceneInts)
+          , bench "concomitanceP''" $
+            whnf (length . (uncurry (foldPlayWith concomitanceP'')))
+            (intSets, sceneInts)
             ]
         ]
   where
