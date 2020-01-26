@@ -71,3 +71,4 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - hdrametrics
+    - HTF

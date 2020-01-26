@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1b6558d6c0dc4f7e33d4cbe370a011adce7a31379cf9676944316ff1c9767ba8
+-- hash: 5f35e31bed1d9653ea4025cfcc643f040bb777e2089c1725ec9be034f6148653
 
 name:           hdrametrics
 version:        0.1.0.0
@@ -85,12 +85,14 @@ test-suite hdrametrics-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Test.Text.DraCor.Concomitance
       Paths_hdrametrics
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      HTF
+    , base >=4.7 && <5
     , hashable
     , hdrametrics
     , unordered-containers

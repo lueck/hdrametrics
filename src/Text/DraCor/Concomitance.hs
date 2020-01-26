@@ -2,9 +2,13 @@ module Text.DraCor.Concomitance
   ( foldPlayWith
   , foldPlayWith'
   , concomitanceP
+  , concomitanceP'
+  , concomitanceP''
   , dominanceP
   , cooccurrenceP
+  , cooccurrenceP'
   , subsequencesOfSize
+  , longerThanOne
   ) where
 
 -- | This module defines functions for calculating the concomitance
@@ -25,8 +29,23 @@ concomitanceP
      [a]            -- ^ characters in scene
   -> [a]            -- ^ set of characters to calculate the metric for
   -> Bool
-concomitanceP a b = (length (a `union` b) == (length a)) ||
-                    (length (a `intersect` b) == 0)
+concomitanceP scene set = allPresent scene set || nonePresent scene set
+
+
+allPresent :: (Eq a) => [a] -> [a] -> Bool
+allPresent scene set = foldl (\acc c -> acc && (c `elem` scene)) True set
+
+nonePresent :: (Eq a) => [a] -> [a] -> Bool
+nonePresent scene set = foldl (\acc c -> acc && (not $ c `elem` scene)) True set
+
+-- | Same as 'concomitanceP', but other implementation.
+concomitanceP' :: (Eq a) => [a] -> [a] -> Bool
+concomitanceP' speakers set = all (`elem` speakers) set || all (not . (`elem` speakers)) set
+
+-- | Same as 'concomitanceP', but other implementation.
+concomitanceP'' :: (Eq a) => [a] -> [a] -> Bool
+concomitanceP'' a b = (length (a `union` b) == (length a)) ||
+                      (length (a `intersect` b) == 0)
 
 -- | A predicate for calculating the dominance measure of a character
 -- d over an other character (or a set of characters). The character d
@@ -40,7 +59,14 @@ dominanceP
      [a]            -- ^ characters in scene
   -> [a]            -- ^ set of characters to calculate the metric for
   -> Bool
-dominanceP a b = (length (a `union` b) == (length a)) ||
+dominanceP scene set =
+  ((head set) `elem` scene && nonePresent scene (tail set)) ||
+  allPresent scene set ||
+  nonePresent scene set
+
+-- | Same as 'dominanceP', but implemented with set unions and intersections.
+dominanceP'  :: (Eq a) => [a] -> [a] -> Bool
+dominanceP' a b = (length (a `union` b) == (length a)) ||
                  (((head b) `elem` a) && (length (a `intersect` (tail b)) ==0)) ||
                  (length (a `intersect` b) == 0)
 
@@ -53,7 +79,11 @@ cooccurrenceP
      [a]            -- ^ characters in scene
   -> [a]            -- ^ set of characters to calculate the metric for
   -> Bool
-cooccurrenceP a b = (length (a `union` b) == (length a))
+cooccurrenceP = allPresent
+
+-- | Like 'cooccurrenceP', but implemented on set union.
+cooccurrenceP' :: (Eq a) => [a] -> [a] -> Bool
+cooccurrenceP' a b = (length (a `union` b) == (length a))
 
 
 
@@ -109,3 +139,10 @@ subsequencesOfSize _ [] = [[]]
 subsequencesOfSize i (x:xs) =
   (map (x:) $ subsequencesOfSize (i-1) xs) ++ (subsequencesOfSize i xs)
   -- FIXME: get rid of ++
+
+-- | A predicate that is true when and only when the length of the
+-- sequence given as parameter exceeds 1.
+longerThanOne :: [a] -> Bool
+longerThanOne [] = False
+longerThanOne (_:[]) = False
+longerThanOne _ = True
