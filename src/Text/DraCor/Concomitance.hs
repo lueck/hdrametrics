@@ -62,14 +62,17 @@ dominanceP
   -> Bool
 dominanceP scene set =
   ((head set) `elem` scene && nonePresent scene (tail set)) ||
+  ((head set) `elem` scene && any (`elem` scene) (tail set)) ||
   allPresent scene set ||
   nonePresent scene set
 
 -- | Same as 'dominanceP', but implemented with set unions and intersections.
 dominanceP'  :: (Eq a) => [a] -> [a] -> Bool
-dominanceP' a b = (length (a `union` b) == (length a)) ||
-                 (((head b) `elem` a) && (length (a `intersect` (tail b)) ==0)) ||
-                 (length (a `intersect` b) == 0)
+dominanceP' a b =
+  (length (a `union` b) == (length a)) ||
+  ((head b) `elem` a && any (`elem` a) (tail b)) ||
+  (((head b) `elem` a) && (length (a `intersect` (tail b)) ==0)) ||
+  (length (a `intersect` b) == 0)
 
 -- | A predicate for calculating the cooccurence of two characters or
 -- even a set of characters with an arbitrary cardinality number. The

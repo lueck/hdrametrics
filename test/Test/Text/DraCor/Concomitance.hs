@@ -119,6 +119,55 @@ test_foldPlayWithCooccurrence = do
                                 ,[1,2,3]
                                 ]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
 
+test_concomitanceP = do
+  assertBool $ concomitanceP ([]::[Int]) ([]::[Int])
+  --
+  assertBool $ concomitanceP [1] ([]::[Int]) -- empty set
+  assertBool $ concomitanceP ([]::[Int]) [1] -- none present
+  assertBool $ concomitanceP ([]::[Int]) [1,2] -- none present
+  --
+  assertBool $ concomitanceP [1] [1] -- all present
+  -- -- minimal real world: a pair of characters
+  assertBool $ concomitanceP [3] [1,2] -- none present
+  assertBool $ concomitanceP [1,2] [1,2] -- all present
+  assertBool $ concomitanceP [1,2,3] [1,2] -- all and more present
+  assertBool $ concomitanceP [3,4,5] [1,2] -- none present
+  assertBool $ not $ concomitanceP [1,3] [1,2] -- not all present
+  assertBool $ not $ concomitanceP [1,2] [1,2,3] -- not all present
+
+test_cooccurrenceP = do
+  assertBool $ cooccurrenceP ([]::[Int]) ([]::[Int])
+  --
+  assertBool $ cooccurrenceP [1] ([]::[Int]) -- empty set
+  assertBool $ not $ cooccurrenceP ([]::[Int]) [1] -- none present
+  assertBool $ not $ cooccurrenceP ([]::[Int]) [1,2] -- none present
+  --
+  assertBool $ cooccurrenceP [1] [1] -- all present
+  -- -- minimal real world: a pair of characters
+  assertBool $ not $ cooccurrenceP [3] [1,2] -- none present
+  assertBool $ cooccurrenceP [1,2] [1,2] -- all present
+  assertBool $ cooccurrenceP [1,2,3] [1,2] -- all and more present
+  assertBool $ not $ cooccurrenceP [3,4,5] [1,2] -- none present
+  assertBool $ not $ cooccurrenceP [1,3] [1,2] -- not all present
+  assertBool $ not $ cooccurrenceP [1,2] [1,2,3] -- not all present
+
+test_dominanceP = do
+  --assertRaises (dominanceP ([]::[Int]) ([]::[Int]))
+  --
+  --assertRaises (dominanceP [1] ([]::[Int])) -- empty set
+  assertBool $ dominanceP ([]::[Int]) [1] -- none present
+  assertBool $ dominanceP ([]::[Int]) [1,2] -- none present
+  --
+  assertBool $ dominanceP [1] [1] -- all present
+  -- minimal real world: a pair of characters
+  assertBool $ dominanceP [3] [1,2] -- none present
+  assertBool $ dominanceP [1,2] [1,2] -- all present
+  assertBool $ dominanceP [1,2,3] [1,2] -- all and more present
+  assertBool $ dominanceP [3,4,5] [1,2] -- none present
+  assertBool $ dominanceP [1,3] [1,2] -- not all present
+  assertBool $ dominanceP [1,2] [1,2,3] -- not all present
+  assertBool $ not $ dominanceP [2,3] [1,2,3] -- first not present
+  assertBool $ not $ dominanceP [2,4,5] [1,2,3] -- first not present
 
 prop_concomitanceP :: [Int] -> [Int] -> Bool
 prop_concomitanceP a b =
