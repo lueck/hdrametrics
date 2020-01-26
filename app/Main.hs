@@ -174,12 +174,21 @@ fetch url path = simpleHttp $ url ++ path
 
 
 run :: Opts -> IO ()
-run gOpts@(Opts _ _ cOpts@(Concomitance _ _ _ _ _)) =
-  concomitanceLikePlay concomitanceP gOpts cOpts
-run gOpts@(Opts _ _ cOpts@(Dominance _ _ _ _ _)) =
-  concomitanceLikePlay dominanceP gOpts cOpts
-run gOpts@(Opts _ _ cOpts@(Cooccurrence _ _ _ _ _)) =
-  concomitanceLikePlay cooccurrenceP gOpts cOpts
+run gOpts@(Opts _ _ cOpts@(Concomitance card _ _ _ _)) =
+  concomitanceLikePlay
+  concomitanceP
+  ((filter longerThanOne) . (subsequencesOfSize card))
+  gOpts cOpts
+run gOpts@(Opts _ _ cOpts@(Dominance card _ _ _ _)) =
+  concomitanceLikePlay
+  dominanceP
+  (concat . permutations . (filter longerThanOne) . (subsequencesOfSize card))
+  gOpts cOpts
+run gOpts@(Opts _ _ cOpts@(Cooccurrence card _ _ _ _)) =
+  concomitanceLikePlay
+  cooccurrenceP
+  ((filter longerThanOne) . (subsequencesOfSize card))
+  gOpts cOpts
 
 scenes :: Opts -> IO [[T.Text]]
 scenes gOpts@(Opts (DraCorAPI url corpus play) _ _) = do
@@ -205,20 +214,18 @@ scenes (Opts (ThreadUsersCSV fName) _ _) = do
         speakers
 
 -- concomitanceLikePlay :: Eq a => ([a] -> [a] -> Bool) -> Opts -> Command -> IO ()
-concomitanceLikePlay predicate gOpts cOpts = do
+concomitanceLikePlay predicate mkPowerSet gOpts cOpts = do
   scns <- scenes gOpts
   let characters = nub $ concat scns
       -- characterSets = filter ((\l -> l>=2 && l<=(concMaxCardinalNum cOpts)) . length) $
       --   subsequences characters
-      characterSets = filter longerThanOne $
-        subsequencesOfSize (concMaxCardinalNum cOpts) characters
+      -- characterSets = mkPowerSet characters
       -- mapping of strings to integers
       characterIntTuples = zip [1..] characters
       getInt c = fst $ head $ filter ((==c) . snd) characterIntTuples
       characterMap = IntMap.fromList $ characterIntTuples
       sceneInts = map (map getInt) scns
-      intSets = filter longerThanOne $
-        subsequencesOfSize (concMaxCardinalNum cOpts) [1..(length characters)]
+      intSets = mkPowerSet [1..(length characters)]
       -- calculate
       concomitanceValues = foldPlayWith predicate intSets sceneInts
       out = sortBy (concSortedBy cOpts) $ -- sortOn (sortOrder $ concSortedBy cOpts) $
@@ -229,16 +236,12 @@ concomitanceLikePlay predicate gOpts cOpts = do
         concomitanceValues
   hPutStrLn stderr $ "Found scenes: " ++ (show $ length scns)
   hPutStrLn stderr $ "Found characters: " ++ (show $ length characters)
-  hPutStrLn stderr $ "Size of generated powerset of characters: " ++ (show $ length characterSets)
+  hPutStrLn stderr $ "Size of generated powerset of characters: " ++ (show $ length intSets)
   output gOpts out
   where
     sortBy MetricOrder = sortOn snd
     sortBy CardinalityOrder = sortOn (length . fst)
     sortBy _ = id
-    longerThanOne :: [a] -> Bool
-    longerThanOne [] = False
-    longerThanOne (_:[]) = False
-    longerThanOne _ = True
     mkAbsoluteValues :: Fractional i => Bool -> i -> (([a], i) -> ([a], i))
     mkAbsoluteValues True l = (\(cs, v) -> (cs, v*l))
     mkAbsoluteValues _ _ = id
