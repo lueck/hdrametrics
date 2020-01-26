@@ -5,6 +5,7 @@ module Text.DraCor.Concomitance
   , concomitanceP'
   , concomitanceP''
   , dominanceP
+  , dominanceP'
   , cooccurrenceP
   , cooccurrenceP'
   , subsequencesOfSize

@@ -118,3 +118,19 @@ test_foldPlayWithCooccurrence = do
     foldPlayWith cooccurrenceP ([[1,2,4]
                                 ,[1,2,3]
                                 ]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
+
+
+prop_concomitanceP :: [Int] -> [Int] -> Bool
+prop_concomitanceP a b =
+  concomitanceP a b == concomitanceP' a b &&
+  concomitanceP a b == concomitanceP'' a b &&
+  concomitanceP' a b == concomitanceP'' a b
+
+prop_dominanceP :: [Int] -> [Int] -> Bool
+prop_dominanceP a b =
+  if (length b < 1) then discard else
+    dominanceP a b == dominanceP' a b
+
+prop_cooccurrenceP :: [Int] -> [Int] -> Bool
+prop_cooccurrenceP a b =
+  cooccurrenceP a b == cooccurrenceP' a b
