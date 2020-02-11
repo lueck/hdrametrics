@@ -19,6 +19,7 @@ import Data.Char
 import Text.DraCor.Types
 import Text.DraCor.API
 
+import Text.DraCor.FoldPlay
 import Text.DraCor.Concomitance
 
 data Opts = Opts
@@ -80,7 +81,7 @@ opts_ = Opts
        <|>
        (flag' CSV
         (long "csv"
-         <> help "CSV output. Note that CSV output only works properly for pairs of characters. This is --cardinality 2. For higher cardinality the set of characters is truncated after the second character."))
+         <> help "CSV output. Note that CSV output only works properly for pairs of characters. This is --cardinality 2. For higher cardinality the set of characters is truncated after the second character!"))
       )
   <*> subparser
   (command "concomitance"
@@ -182,7 +183,7 @@ run gOpts@(Opts _ _ cOpts@(Concomitance card _ _ _ _)) =
 run gOpts@(Opts _ _ cOpts@(Dominance card _ _ _ _)) =
   concomitanceLikePlay
   dominanceP
-  (concat . permutations . (filter longerThanOne) . (subsequencesOfSize card))
+  (concat . (map permutations) . (filter longerThanOne) . (subsequencesOfSize card))
   gOpts cOpts
 run gOpts@(Opts _ _ cOpts@(Cooccurrence card _ _ _ _)) =
   concomitanceLikePlay
@@ -200,7 +201,7 @@ scenes gOpts@(Opts (DraCorAPI url corpus play) _ _) = do
       return $ map scnSpeakers $ plySegments ply
 scenes (Opts (ThreadUsersCSV fName) _ _) = do
   c <- B.readFile fName
-  let csvOpts = Csv.defaultDecodeOptions { Csv.decDelimiter = fromIntegral (ord '\t') }
+  let csvOpts = Csv.defaultDecodeOptions { Csv.decDelimiter = fromIntegral (ord ',') }
   case (Csv.decodeWith csvOpts Csv.HasHeader c :: Either String (V.Vector (T.Text, T.Text))) of
     Left err -> do
       fail err
@@ -227,12 +228,14 @@ concomitanceLikePlay predicate mkPowerSet gOpts cOpts = do
       sceneInts = map (map getInt) scns
       intSets = mkPowerSet [1..(length characters)]
       -- calculate
-      concomitanceValues = foldPlayWith predicate intSets sceneInts
+      normFun = if (concAbsoluteValues cOpts)
+        then absoluteFrequency'
+        else normalizeWithScenesCount
+      concomitanceValues = foldPlayWithPredicate predicate normFun intSets sceneInts
       out = sortBy (concSortedBy cOpts) $ -- sortOn (sortOrder $ concSortedBy cOpts) $
         filter ((\v -> v >= (concLowerBoundConc cOpts) &&
                        v <= (concUpperBoundConc cOpts)) . snd) $
-        map ((mkAbsoluteValues (concAbsoluteValues cOpts) (fromIntegral $ length scns)) .
-             (\(is, v) -> ((map (characterMap IntMap.!) is), v)))
+        map (\(is, v) -> ((map (characterMap IntMap.!) is), v))
         concomitanceValues
   hPutStrLn stderr $ "Found scenes: " ++ (show $ length scns)
   hPutStrLn stderr $ "Found characters: " ++ (show $ length characters)
@@ -242,9 +245,6 @@ concomitanceLikePlay predicate mkPowerSet gOpts cOpts = do
     sortBy MetricOrder = sortOn snd
     sortBy CardinalityOrder = sortOn (length . fst)
     sortBy _ = id
-    mkAbsoluteValues :: Fractional i => Bool -> i -> (([a], i) -> ([a], i))
-    mkAbsoluteValues True l = (\(cs, v) -> (cs, v*l))
-    mkAbsoluteValues _ _ = id
 
 -- | Format the output
 output :: (ToJSON a, Csv.ToField a, Show a,

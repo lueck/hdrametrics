@@ -10,6 +10,7 @@ import qualified Data.IntMap as IntMap
 import Text.DraCor.Types
 import Text.DraCor.API
 
+import Text.DraCor.FoldPlay
 import Text.DraCor.Concomitance
 
 import Criterion.Main
@@ -53,34 +54,34 @@ main = do
       hPutStrLn stderr $ "Found characters: " ++ (show $ length characters)
       hPutStrLn stderr $ "Size of generated powerset of characters: " ++ (show $ length characterSets)
       defaultMain
-        [ bgroup "implementations of foldPlayWith"
+        [ bgroup "implementations of foldPlayWithPredicate"
           [
-            bench "foldPlayWith" $
-            whnf (length . (uncurry (foldPlayWith concomitanceP)))
+            bench "foldPlayWithPredicate" $
+            whnf (length . (uncurry (foldPlayWithPredicate concomitanceP absoluteFrequency)))
             (characterSets, scenes)
-          , bench "foldPlayWith'" $
-            whnf (length . (uncurry (foldPlayWith' concomitanceP)))
+          , bench "foldPlayWithPredicate'" $
+            whnf (length . (uncurry (foldPlayWithPredicate' concomitanceP absoluteFrequency)))
             (characterSets, scenes)
           ]
-        , bgroup "foldPlayWith on text or integers"
+        , bgroup "foldPlayWithPredicate on text or integers"
           [
             bench "text" $
-            whnf (length . (uncurry (foldPlayWith concomitanceP)))
+            whnf (length . (uncurry (foldPlayWithPredicate concomitanceP absoluteFrequency)))
             (characterSets, scenes)
           , bench "integers" $
-            whnf (length . (uncurry (foldPlayWith concomitanceP)))
+            whnf (length . (uncurry (foldPlayWithPredicate concomitanceP absoluteFrequency)))
             (intSets, sceneInts)
           ]
         , bgroup "implementations of the concomitance-predicate"
           [
             bench "concomitanceP" $
-            whnf (length . (uncurry (foldPlayWith concomitanceP)))
+            whnf (length . (uncurry (foldPlayWithPredicate concomitanceP absoluteFrequency)))
             (intSets, sceneInts)
           , bench "concomitanceP'" $
-            whnf (length . (uncurry (foldPlayWith concomitanceP')))
+            whnf (length . (uncurry (foldPlayWithPredicate concomitanceP' absoluteFrequency)))
             (intSets, sceneInts)
           , bench "concomitanceP''" $
-            whnf (length . (uncurry (foldPlayWith concomitanceP'')))
+            whnf (length . (uncurry (foldPlayWithPredicate concomitanceP'' absoluteFrequency)))
             (intSets, sceneInts)
             ]
         ]

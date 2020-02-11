@@ -5,6 +5,7 @@ module Test.Text.DraCor.Concomitance where
 import Test.Framework
 import Data.List
 
+import Text.DraCor.FoldPlay
 import Text.DraCor.Concomitance
 
 test_longerThanOne = do
@@ -56,68 +57,70 @@ prop_subsequencesOfSizeN' (NonNegative l) (xs :: [Int]) =
   (filter ((<=l) . length) $ subsequences $ take 10 xs) \\ (subsequencesOfSize l (take 10 xs)) == []
 
 
-test_foldPlayWithNoCharsNoScenes = do
-  assertEqual [] $ foldPlayWith concomitanceP ([]::[[Int]]) ([]::[[Int]])
+test_foldPlayWithPredicateNoCharsNoScenes = do
+  assertEqual [] $ foldPlayWithPredicate concomitanceP normalizeWithScenesCount ([]::[[Int]]) ([]::[[Int]])
 
-test_foldPlayWithNoScenes = do
+test_foldPlayWithPredicateNoScenes = do
   unitTestPending "division by zero when no scenes"
-  assertEqual [([1,2], 0)] $ foldPlayWith concomitanceP ([[1,2]]::[[Int]]) ([]::[[Int]])
+  assertEqual [([1,2], 0)] $ foldPlayWithPredicate concomitanceP normalizeWithScenesCount ([[1,2]]::[[Int]]) ([]::[[Int]])
 
-test_foldPlayWithNoChars = do
-  assertEqual [] $ foldPlayWith concomitanceP  ([]::[[Int]]) ([[1,2]]::[[Int]])
+test_foldPlayWithPredicateNoChars = do
+  assertEqual [] $ foldPlayWithPredicate concomitanceP normalizeWithScenesCount ([]::[[Int]]) ([[1,2]]::[[Int]])
 
-test_foldPlayWithConcomitance = do
+test_foldPlayWithPredicateConcomitance = do
+  let foldPlay = foldPlayWithPredicate concomitanceP normalizeWithScenesCount :: Fractional i => ([[Int]] -> [[Int]] -> [([Int], i)])
   assertEqual [([1,2], 1)] $
-    foldPlayWith concomitanceP ([[1,2]]::[[Int]]) ([[1,2]]::[[Int]])
+    foldPlay ([[1,2]]::[[Int]]) ([[1,2]]::[[Int]])
   assertEqual [([1,2], 0.5)] $
-    foldPlayWith concomitanceP ([[1,2]]::[[Int]]) ([[1,2], [1]]::[[Int]])
+    foldPlay ([[1,2]]::[[Int]]) ([[1,2], [1]]::[[Int]])
   assertEqual [([1,2], ((fromIntegral 1)/(fromIntegral 3)))] $
-    foldPlayWith concomitanceP ([[1,2]]::[[Int]]) ([[1,2], [1], [2]]::[[Int]])
+    foldPlay ([[1,2]]::[[Int]]) ([[1,2], [1], [2]]::[[Int]])
   assertEqual [([1,2], 0)] $
-    foldPlayWith concomitanceP ([[1,2]]::[[Int]]) ([[1], [2]]::[[Int]])
+    foldPlay ([[1,2]]::[[Int]]) ([[1], [2]]::[[Int]])
   assertEqual [([1,2], ((fromIntegral 2)/(fromIntegral 4)))] $
-    foldPlayWith concomitanceP ([[1,2]]::[[Int]]) ([[1,2], [1], [2], [3]]::[[Int]])
+    foldPlay ([[1,2]]::[[Int]]) ([[1,2], [1], [2], [3]]::[[Int]])
   assertEqual [([1,2], ((fromIntegral 2)/(fromIntegral 4)))] $
-    foldPlayWith concomitanceP ([[1,2]]::[[Int]]) ([[4], [1], [2], [3]]::[[Int]])
+    foldPlay ([[1,2]]::[[Int]]) ([[4], [1], [2], [3]]::[[Int]])
   assertEqual [([1,2], ((fromIntegral 2)/(fromIntegral 4)))] $
-    foldPlayWith concomitanceP ([[1,2]]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
+    foldPlay ([[1,2]]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
   assertEqual [([1,2,4], ((fromIntegral 1)/(fromIntegral 4)))] $
-    foldPlayWith concomitanceP ([[1,2,4]]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
+    foldPlay ([[1,2,4]]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
   assertEqual [([1,2,3], ((fromIntegral 0)/(fromIntegral 4)))] $
-    foldPlayWith concomitanceP ([[1,2,3]]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
+    foldPlay ([[1,2,3]]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
   assertEqual [([1,2,4], ((fromIntegral 1)/(fromIntegral 4)))
               ,([1,2,3], ((fromIntegral 0)/(fromIntegral 4)))
               ] $
-    foldPlayWith concomitanceP ([[1,2,4]
-                                ,[1,2,3]
-                                ]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
+    foldPlay ([[1,2,4]
+              ,[1,2,3]
+              ]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
 
 
-test_foldPlayWithCooccurrence = do
+test_foldPlayWithPredicateCooccurrence = do
+  let foldPlay = foldPlayWithPredicate cooccurrenceP normalizeWithScenesCount :: Fractional i => ([[Int]] -> [[Int]] -> [([Int], i)])
   assertEqual [([1,2], 1)] $
-    foldPlayWith cooccurrenceP ([[1,2]]::[[Int]]) ([[1,2]]::[[Int]])
+    foldPlay ([[1,2]]::[[Int]]) ([[1,2]]::[[Int]])
   assertEqual [([1,2], 0.5)] $
-    foldPlayWith cooccurrenceP ([[1,2]]::[[Int]]) ([[1,2], [1]]::[[Int]])
+    foldPlay ([[1,2]]::[[Int]]) ([[1,2], [1]]::[[Int]])
   assertEqual [([1,2], ((fromIntegral 1)/(fromIntegral 3)))] $
-    foldPlayWith cooccurrenceP ([[1,2]]::[[Int]]) ([[1,2], [1], [2]]::[[Int]])
+    foldPlay ([[1,2]]::[[Int]]) ([[1,2], [1], [2]]::[[Int]])
   assertEqual [([1,2], 0)] $
-    foldPlayWith cooccurrenceP ([[1,2]]::[[Int]]) ([[1], [2]]::[[Int]])
+    foldPlay ([[1,2]]::[[Int]]) ([[1], [2]]::[[Int]])
   assertEqual [([1,2], ((fromIntegral 1)/(fromIntegral 4)))] $
-    foldPlayWith cooccurrenceP ([[1,2]]::[[Int]]) ([[1,2], [1], [2], [3]]::[[Int]])
+    foldPlay ([[1,2]]::[[Int]]) ([[1,2], [1], [2], [3]]::[[Int]])
   assertEqual [([1,2], ((fromIntegral 0)/(fromIntegral 4)))] $
-    foldPlayWith cooccurrenceP ([[1,2]]::[[Int]]) ([[4], [1], [2], [3]]::[[Int]])
+    foldPlay ([[1,2]]::[[Int]]) ([[4], [1], [2], [3]]::[[Int]])
   assertEqual [([1,2], ((fromIntegral 1)/(fromIntegral 4)))] $
-    foldPlayWith cooccurrenceP ([[1,2]]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
+    foldPlay ([[1,2]]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
   assertEqual [([1,2,4], ((fromIntegral 1)/(fromIntegral 4)))] $
-    foldPlayWith cooccurrenceP ([[1,2,4]]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
+    foldPlay ([[1,2,4]]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
   assertEqual [([1,2,3], ((fromIntegral 0)/(fromIntegral 4)))] $
-    foldPlayWith cooccurrenceP ([[1,2,3]]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
+    foldPlay ([[1,2,3]]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
   assertEqual [([1,2,4], ((fromIntegral 1)/(fromIntegral 4)))
               ,([1,2,3], ((fromIntegral 0)/(fromIntegral 4)))
               ] $
-    foldPlayWith cooccurrenceP ([[1,2,4]
-                                ,[1,2,3]
-                                ]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
+    foldPlay ([[1,2,4]
+              ,[1,2,3]
+              ]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
 
 test_concomitanceP = do
   assertBool $ concomitanceP ([]::[Int]) ([]::[Int])
