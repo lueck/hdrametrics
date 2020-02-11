@@ -1,6 +1,8 @@
 module Text.DraCor.FoldPlay
   ( foldPlayWithPredicate
   , foldPlayWithPredicate'
+  , allPresent
+  , nonePresent
   , normalizeWithScenesCount
   , absoluteFrequency
   , absoluteFrequency'
@@ -55,6 +57,16 @@ mapSceneWithPredicate'
   -> [a]                        -- ^ characters in new scene
   -> Map.HashMap [a] Int
 mapSceneWithPredicate' p acc scene = Map.mapWithKey (\k v -> v + (fromEnum $ p scene k)) acc
+
+-- | A predicate for reuse: True if all (and more) from the set are
+-- present in the scene.
+allPresent :: (Eq a) => [a] -> [a] -> Bool
+allPresent scene set = foldl (\acc c -> acc && (c `elem` scene)) True set
+
+-- | A predicate for reuse: True if none from the set is present in
+-- the scene.
+nonePresent :: (Eq a) => [a] -> [a] -> Bool
+nonePresent scene set = foldl (\acc c -> acc && (not $ c `elem` scene)) True set
 
 
 -- * Normalization functions

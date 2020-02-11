@@ -21,6 +21,8 @@ import Text.DraCor.API
 
 import Text.DraCor.FoldPlay
 import Text.DraCor.Concomitance
+import Text.DraCor.Cooccurrence
+import Text.DraCor.Dominance
 
 data Opts = Opts
   { source :: DataSource

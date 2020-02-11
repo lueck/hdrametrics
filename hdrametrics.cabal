@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e8d0d6c70843a8abd70270964a04f9eabd19edf824b565cabb932c7800969c22
+-- hash: 38e8221c2cb40ebd0423d07780890c51c5e78d6143e6c5312752a5d9ee65fd18
 
 name:           hdrametrics
 version:        0.1.0.0
@@ -29,6 +29,8 @@ library
   exposed-modules:
       Lib
       Text.DraCor.Concomitance
+      Text.DraCor.Cooccurrence
+      Text.DraCor.Dominance
       Text.DraCor.FoldPlay
   other-modules:
       Paths_hdrametrics
@@ -68,6 +70,9 @@ test-suite hdrametrics-test
   main-is: Spec.hs
   other-modules:
       Test.Text.DraCor.Concomitance
+      Test.Text.DraCor.Cooccurrence
+      Test.Text.DraCor.Dominance
+      Test.Text.DraCor.FoldPlay
       Paths_hdrametrics
   hs-source-dirs:
       test
