@@ -58,6 +58,7 @@ data Speach = Speach
 
 data SaxState = SaxState
   { _tagStack :: [B.ByteString]
+  , _inBody :: Bool
   , _inSp :: Bool
   , _textState :: [(T.Text -> TextState)]
   , _scenes :: [[Speach]]
@@ -71,9 +72,10 @@ makeLenses ''SaxState
 initialSaxState :: Either String SaxState
 initialSaxState = Right $ SaxState
   { _tagStack = []
+  , _inBody = False
   , _inSp = False
   , _textState = [Mute]
-  , _scenes = [[]]
+  , _scenes = [[]] -- As long as no sp is before the first div in body, a flat list would be OK.
   , _who = ""
   , _speaker = []
   , _speach = []
@@ -101,6 +103,15 @@ toText = T.decodeUtf8
 openTag :: Either String SaxState -> B.ByteString -> Either String SaxState
 openTag (Left s) tag = Left s
 openTag (Right s) tag
+  -- entering body
+  | (tag =~ (teiTag s "body") :: Bool)
+  = Right $ s & tagStack %~ (tag:)
+    & inBody .~ True
+  -- a new scene
+  | (tag =~ (teiTag s "div") :: Bool)
+    && _inBody s
+  = Right $ s & tagStack %~ (tag:)
+    & scenes %~ (++[[]])
   -- opening sp
   | tag =~ (teiTag s "sp") :: Bool
   = Right $ s & tagStack %~ (tag:)
@@ -134,7 +145,7 @@ openTag (Right s) tag
 
 
 attrNode :: Either String SaxState -> B.ByteString -> B.ByteString -> Either String SaxState
-attrNote (Left err) _ _ = Left err
+attrNode (Left err) _ _ = Left err
 attrNode (Right s) k v
   | _inSp s
     && k == "who"
@@ -146,7 +157,7 @@ closeTag :: Either String SaxState -> B.ByteString -> Either String SaxState
 closeTag (Left err) _ = Left err
 closeTag (Right s) tag
   | tag /= head (_tagStack s)
-  = Left "Fatal XML error: unexpected closing tag"
+  = Left $ "Fatal XML error: unexpected closing tag " -- ++ (show $ B.unpack tag)
   | _tagStack s == []
   = Left "Fatal XML error: closing tag while no open tags left"
   -- closing sp
@@ -198,16 +209,20 @@ cdata s _ = s
 -- | A parser for TEI encoded theater plays. A 'Left' value is
 -- returned when a parser error has occurred. The speaches of the play
 -- are wrapped into a 'Right' value.
+--
+-- The parser checks for properly nested elements.
 parseTEI :: B.ByteString -> Either String [[Speach]]
 parseTEI =
-  fmap _scenes .
+  fmap (removeFirstSceneIfEmpty . _scenes) .
   joinEithers .
   fold openTag attrNode endOpenTag textNode closeTag cdata initialSaxState
   where
     joinEithers :: Either XenoException (Either String SaxState) -> Either String SaxState
     joinEithers (Left xerr) = Left $ show xerr
     joinEithers (Right result) = result
-                
+    removeFirstSceneIfEmpty xs
+      | head xs == [] = tail xs
+      | otherwise = xs
 
 -- * Playing around
 
@@ -222,7 +237,7 @@ main = do
     Left err -> do
       print err
     Right s -> do
-      print s
-      -- print $ map (map speachWho) s
-      print $ length $ s --_scenes s
-      print $ length $ head $ s --_scenes s
+      -- print s
+      -- mapM_ (print . (map speachWho)) s
+      print $ length $ s
+      print $ map length s
