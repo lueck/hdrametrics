@@ -110,6 +110,9 @@ openTag (Right s) tag
   -- a new scene
   | (tag =~ (teiTag s "div") :: Bool)
     && _inBody s
+    -- -- for nested divs, the outer would produce an empty
+    -- -- list. Downside: No scenes without speaches!
+    -- && ((head $ _scenes s) /= [])
   = Right $ s & tagStack %~ (tag:)
     & scenes %~ (++[[]])
   -- opening sp
@@ -233,9 +236,11 @@ parseTEI =
 -- | Parse an example play with @stack runghc TEI.hs@
 main :: IO ()
 main = do
-  let exampleDir = "../../../test/examples/"
+  let gerdracor = "/home/clueck/Projekte/Dramenkorpus/gerdracor/tei/"
+      exampleDir = "../../../test/examples/"
       suff = "alberti-im-suff.xml"
-  xml <- B.readFile $ exampleDir ++ suff
+      goetz = "goethe-goetz-von-berlichingen-mit-der-eisernen-hand.xml"
+  xml <- B.readFile $ gerdracor ++ goetz
   let result = parseTEI xml
   case result of
     Left err -> do
@@ -245,3 +250,4 @@ main = do
       -- mapM_ (print . (map speachWho)) s
       print $ length $ s
       print $ map length s
+      print $ foldl (+) 0 $ map length s
