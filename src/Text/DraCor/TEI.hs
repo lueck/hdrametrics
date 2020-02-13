@@ -220,6 +220,10 @@ parseTEI =
     joinEithers :: Either XenoException (Either String SaxState) -> Either String SaxState
     joinEithers (Left xerr) = Left $ show xerr
     joinEithers (Right result) = result
+    -- The first scene element is empty for plays with a body and all
+    -- sp elements contained in divs in the body, due to the initial
+    -- state. But maybe there are valid TEI instance where this is not
+    -- the case.
     removeFirstSceneIfEmpty xs
       | head xs == [] = tail xs
       | otherwise = xs
