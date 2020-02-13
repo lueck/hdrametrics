@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3351ed127ec9d68df6ac663ad19d56be3f6b921f4d5b7646c11cfafac09e9227
+-- hash: 38e8221c2cb40ebd0423d07780890c51c5e78d6143e6c5312752a5d9ee65fd18
 
 name:           hdrametrics
 version:        0.1.0.0
@@ -32,20 +32,14 @@ library
       Text.DraCor.Cooccurrence
       Text.DraCor.Dominance
       Text.DraCor.FoldPlay
-      Text.DraCor.TEI
   other-modules:
       Paths_hdrametrics
   hs-source-dirs:
       src
   build-depends:
       base >=4.7 && <5
-    , bytestring
     , hashable
-    , lens
-    , regex-tdfa
-    , text
     , unordered-containers
-    , xeno
   default-language: Haskell2010
 
 executable hdrametrics
@@ -65,13 +59,10 @@ executable hdrametrics
     , hdracor
     , hdrametrics
     , http-conduit
-    , lens
     , optparse-applicative
-    , regex-tdfa
     , text
     , unordered-containers
     , vector
-    , xeno
   default-language: Haskell2010
 
 test-suite hdrametrics-test
@@ -89,14 +80,9 @@ test-suite hdrametrics-test
   build-depends:
       HTF
     , base >=4.7 && <5
-    , bytestring
     , hashable
     , hdrametrics
-    , lens
-    , regex-tdfa
-    , text
     , unordered-containers
-    , xeno
   default-language: Haskell2010
 
 benchmark hdrametrics-bench
@@ -116,9 +102,5 @@ benchmark hdrametrics-bench
     , hdracor
     , hdrametrics
     , http-conduit
-    , lens
-    , regex-tdfa
-    , text
     , unordered-containers
-    , xeno
   default-language: Haskell2010

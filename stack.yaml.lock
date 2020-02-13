@@ -6,18 +6,18 @@
 packages:
 - completed:
     cabal-file:
-      size: 1484
-      sha256: 79c06896de442c6c7f2150b367b6a535fc031703863e750d67f81c68545e91a8
+      size: 1630
+      sha256: 7e7404abb0af254d245170627d676c584e8ed1f240610bb1e89f0f6144a8c237
     name: hdracor
     version: 0.1.0.0
     git: https://github.com/dracor-org/hdracor.git
     pantry-tree:
-      size: 2575
-      sha256: f13cbf0a289379d5db11cb28a036a7b417c528d8f9ff8760b2b69843a394f533
-    commit: e65bfb1c463d21d183fe040d7891dbd0e2a69efc
+      size: 2783
+      sha256: f009533a45e53705bbfba3f45839124b82dcc09dafafe9d9ca1da618c3fe3e67
+    commit: 6679d00fcca625d8c75fe71448c5d97715b0af6f
   original:
     git: https://github.com/dracor-org/hdracor.git
-    commit: e65bfb1c463d21d183fe040d7891dbd0e2a69efc
+    commit: 6679d00fcca625d8c75fe71448c5d97715b0af6f
 snapshots:
 - completed:
     size: 524154

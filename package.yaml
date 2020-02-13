@@ -23,11 +23,6 @@ dependencies:
 - base >= 4.7 && < 5
 - unordered-containers
 - hashable
-- xeno
-- text
-- bytestring
-- lens
-- regex-tdfa
 
 library:
   source-dirs: src
