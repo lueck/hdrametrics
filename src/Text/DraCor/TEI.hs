@@ -17,6 +17,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Control.Lens
 import Text.Regex.TDFA
+import Data.Char
 
 -- * Types
 
@@ -47,7 +48,7 @@ isSpeachOrStage _ = False
 -- | A speach (turn taking) of a theater play, with a (one or many)
 -- speaker and a list of stateful speach texts.
 data Speach = Speach
-  { speachWho :: Maybe T.Text
+  { speachWho :: [T.Text]
   , speachSpeaker :: [T.Text]
   , speachSpeach :: [TextState]
   } deriving (Show, Eq)
@@ -87,8 +88,10 @@ teiTag s localName = prefix ++ localName ++ "$"
 
 mkSpeach :: SaxState -> Speach
 mkSpeach s = Speach
-  { speachWho = if (_who s == "") then Nothing else (Just $ _who s)
-  , speachSpeaker = filter ((>0) . T.length) $ map (T.strip . getTextStateText) $ filter isSpeaker $ _speach s
+  { speachWho = T.words $ _who s
+  , speachSpeaker = filter ((>0) . T.length) $
+                    map (T.strip . (T.dropAround isPunctuation) . T.strip . getTextStateText) $
+                    filter isSpeaker $ _speach s
   , speachSpeach = filter isSpeachOrStage $ _speach s
   }
 
