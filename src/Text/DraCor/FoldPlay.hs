@@ -3,6 +3,7 @@ module Text.DraCor.FoldPlay
   , foldPlayWithPredicate'
   , allPresent
   , nonePresent
+  , foldPlayWithWindow
   , normalizeWithScenesCount
   , absoluteFrequency
   , absoluteFrequency'
@@ -67,6 +68,37 @@ allPresent scene set = foldl (\acc c -> acc && (c `elem` scene)) True set
 -- the scene.
 nonePresent :: (Eq a) => [a] -> [a] -> Bool
 nonePresent scene set = foldl (\acc c -> acc && (not $ c `elem` scene)) True set
+
+
+-- * Folding with a sliding window
+
+-- | Fold a play by moving a window and calculating some measure
+-- within it.
+--
+-- Example: Who answered how often on whom?
+-- 
+-- >>> foldPlayWithWindow 2 1 (+) [[1, 2, 3, 1, 2, 1, 2, 3, 1, 3, 1]]
+-- [([2,1],3),([3,1],1),([1],1),([1,2],1),([1,3],3),([3,2],2)]
+--
+-- Read the result carefully: 2 answered 3 times on 1, 3 answered once
+-- on 1, 1 once started a conversation, etc.
+foldPlayWithWindow
+  :: (Hashable a, Ord a, Num i) =>
+     Int                 -- ^ window size
+  -> i                   -- ^ representational value
+  -> (i -> i -> i)       -- ^ representational function
+  -> [[a]]               -- ^ scenes with speaking characters in order
+  -> [([a], i)]
+foldPlayWithWindow winSize initVal f speaches =
+  Map.toList $
+  foldl1 (Map.unionWith f) $
+  map (snd . (foldl incAnswers ([], Map.empty))) speaches
+  where
+    -- incAnswers :: (Num i) => ([a], Map.HashMap [a] i) -> a -> ([a], Map.HashMap [a] i)
+    incAnswers (spoken, answers) speaker =
+      (take (winSize - 1) combi, Map.insertWith f combi initVal answers)
+      where
+        combi = (speaker:spoken)
 
 
 -- * Normalization functions
