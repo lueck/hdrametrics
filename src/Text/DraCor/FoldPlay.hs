@@ -88,7 +88,7 @@ nonePresent scene set = foldl (\acc c -> acc && (not $ c `elem` scene)) True set
 --
 -- Example: Who answered how often on whom?
 -- 
--- >>> foldPlayWithWindow 2 1 (+) id [[1, 2, 3, 1, 2, 1, 2, 3, 1, 3, 1]]
+-- >>> foldPlayWithWindow 2 (const 1) (+) id [[1, 2, 3, 1, 2, 1, 2, 3, 1, 3, 1]]
 -- [([2,1],3),([3,1],1),([1],1),([1,2],1),([1,3],3),([3,2],2)]
 --
 -- Read the result carefully: 2 answered 3 times on 1, 3 answered once
@@ -99,7 +99,7 @@ nonePresent scene set = foldl (\acc c -> acc && (not $ c `elem` scene)) True set
 -- strukture for x.
 --
 -- >>> firstAndLast xs = if ((head xs) == (last xs)) then [head xs] else [-1]
--- >>> foldPlayWithWindow 3 1 (+) firstAndLast [[1, 2, 3, 1, 2, 1, 2, 3, 1, 3, 1]]
+-- >>> foldPlayWithWindow 3 (const 1) (+) firstAndLast [[1, 2, 3, 1, 2, 1, 2, 3, 1, 3, 1]]
 -- [([1],3),([-1],6),([2],1),([3],1)]
 --
 -- Note that the count for character 1 is to high by 1. This results
@@ -108,24 +108,30 @@ nonePresent scene set = foldl (\acc c -> acc && (not $ c `elem` scene)) True set
 -- the first and last character in this window. You can fix this by
 -- checking the window size in the function for representing the
 -- window. See unit tests for an example.
+--
+-- Please note that you can even pass in complete speach records and
+-- then have the function for representing the window get the
+-- character names from them and let the metrics value function
+-- evaluate the speach records. So you may even calculate e.g. the
+-- sentiment's slope within the window.
 foldPlayWithWindow
-  :: (Hashable a, Ord a, Num i) =>
+  :: (Hashable b, Ord b, Num i) =>
      Int                 -- ^ window size
-  -> i                   -- ^ representational value
-  -> (i -> i -> i)       -- ^ metrics function
-  -> ([a] -> [a])        -- ^ function for representing the window
-  -> [[a]]               -- ^ scenes with speaking characters in order
-  -> [([a], i)]
-foldPlayWithWindow winSize initVal mf wf speaches =
+  -> ([a] -> i)          -- ^ metrics value function
+  -> (i -> i -> i)       -- ^ metrics aggregation function
+  -> ([a] -> [b])        -- ^ function for representing the window
+  -> [[a]]               -- ^ scenes with speaches or speaking characters in order
+  -> [([b], i)]
+foldPlayWithWindow winSize mf af wf speaches =
   Map.toList $
-  foldl1 (Map.unionWith mf) $
-  map (snd . (foldl incAnswers ([], Map.empty))) speaches
+  foldl1 (Map.unionWith af) $
+  map (snd . (foldl updAggregation ([], Map.empty))) speaches
   where
     -- incAnswers :: (Num i) => ([a], Map.HashMap [a] i) -> a -> ([a], Map.HashMap [a] i)
-    incAnswers (spoken, answers) speaker =
-      (take (winSize - 1) window, Map.insertWith mf (wf window) initVal answers)
+    updAggregation (spoken, aggregation) current =
+      (take (winSize - 1) window, Map.insertWith af (wf window) (mf window) aggregation)
       where
-        window = (speaker:spoken)
+        window = (current:spoken)
 
 
 -- * Normalization functions

@@ -16,4 +16,4 @@ import Text.DraCor.FoldPlay
 answers :: (Hashable a, Ord a) =>
            [[a]]         -- ^ scenes with speaking characters in order
         -> [([a], Int)]
-answers = foldPlayWithWindow 2 1 (+) id
+answers = foldPlayWithWindow 2 (const 1) (+) id
