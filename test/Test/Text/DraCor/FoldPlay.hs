@@ -93,3 +93,19 @@ test_foldPlayWithPredicateAllPresent = do
     foldPlay ([[1,2,4]
               ,[1,2,3]
               ]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
+
+test_foldPlayWithWindow_answers = do
+  assertEqual ([([2,1],3),([3,1],1),([1],1),([1,2],1),([1,3],3),([3,2],2)]::[([Int], Int)]) $
+    foldPlayWithWindow 2 1 (+) id [[1, 2, 3, 1, 2, 1, 2, 3, 1, 3, 1]]
+
+test_foldPlayWithWindow_dialogues = do
+  let firstAndLast xs = if ((head xs) == (last xs)) then [head xs] else [-1]
+  assertEqual ([([1],3),([-1],6),([2],1),([3],1)]::[([Int], Int)]) $
+    foldPlayWithWindow 3 1 (+) firstAndLast [[1, 2, 3, 1, 2, 1, 2, 3, 1, 3, 1]]
+
+test_foldPlayWithWindow_dialogues' = do
+  let firstAndLast xs = if ((head xs) == (last xs) && (length xs == 3))
+        then [head xs]
+        else [-1]
+  assertEqual ([([1],2),([-1],7),([2],1),([3],1)]::[([Int], Int)]) $
+    foldPlayWithWindow 3 1 (+) firstAndLast [[1, 2, 3, 1, 2, 1, 2, 3, 1, 3, 1]]

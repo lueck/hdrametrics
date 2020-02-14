@@ -11,6 +11,17 @@ module Text.DraCor.FoldPlay
   , longerThanOne
   ) where
 
+-- | This module defines generic basic functions for analyzing
+-- dramatic texts. They are basically folds on the scenes of a
+-- play. The functions can be used with various other simple functions
+-- for calculating specific metrics. So writing metrics is a
+-- composition of higher order functions, of folds and simple other
+-- functions.
+--
+-- The functions are also generic in the sense, that characters
+-- etc. may be represented by integers or even 8-bit words instead of
+-- strings. This may have a boost on performance.
+
 import qualified Data.HashMap.Lazy as Map
 import Data.Hashable (Hashable)
 import Data.List
@@ -77,28 +88,44 @@ nonePresent scene set = foldl (\acc c -> acc && (not $ c `elem` scene)) True set
 --
 -- Example: Who answered how often on whom?
 -- 
--- >>> foldPlayWithWindow 2 1 (+) [[1, 2, 3, 1, 2, 1, 2, 3, 1, 3, 1]]
+-- >>> foldPlayWithWindow 2 1 (+) id [[1, 2, 3, 1, 2, 1, 2, 3, 1, 3, 1]]
 -- [([2,1],3),([3,1],1),([1],1),([1,2],1),([1,3],3),([3,2],2)]
 --
 -- Read the result carefully: 2 answered 3 times on 1, 3 answered once
 -- on 1, 1 once started a conversation, etc.
+--
+-- Example: Count how often characters take part in dialogue-like mini
+-- structures, e.g. the sequence x y x is a dialogue-like mini
+-- strukture for x.
+--
+-- >>> firstAndLast xs = if ((head xs) == (last xs)) then [head xs] else [-1]
+-- >>> foldPlayWithWindow 3 1 (+) firstAndLast [[1, 2, 3, 1, 2, 1, 2, 3, 1, 3, 1]]
+-- [([1],3),([-1],6),([2],1),([3],1)]
+--
+-- Note that the count for character 1 is to high by 1. This results
+-- from the beginning and the construction of the window there: For
+-- the first step, the window size is still only 1 and character 1 is
+-- the first and last character in this window. You can fix this by
+-- checking the window size in the function for representing the
+-- window. See unit tests for an example.
 foldPlayWithWindow
   :: (Hashable a, Ord a, Num i) =>
      Int                 -- ^ window size
   -> i                   -- ^ representational value
-  -> (i -> i -> i)       -- ^ representational function
+  -> (i -> i -> i)       -- ^ metrics function
+  -> ([a] -> [a])        -- ^ function for representing the window
   -> [[a]]               -- ^ scenes with speaking characters in order
   -> [([a], i)]
-foldPlayWithWindow winSize initVal f speaches =
+foldPlayWithWindow winSize initVal mf wf speaches =
   Map.toList $
-  foldl1 (Map.unionWith f) $
+  foldl1 (Map.unionWith mf) $
   map (snd . (foldl incAnswers ([], Map.empty))) speaches
   where
     -- incAnswers :: (Num i) => ([a], Map.HashMap [a] i) -> a -> ([a], Map.HashMap [a] i)
     incAnswers (spoken, answers) speaker =
-      (take (winSize - 1) combi, Map.insertWith f combi initVal answers)
+      (take (winSize - 1) window, Map.insertWith mf (wf window) initVal answers)
       where
-        combi = (speaker:spoken)
+        window = (speaker:spoken)
 
 
 -- * Normalization functions

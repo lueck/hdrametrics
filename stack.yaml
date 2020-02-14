@@ -42,7 +42,7 @@ packages:
 # extra-deps: []
 extra-deps:
 - git: https://github.com/dracor-org/hdracor.git
-  commit: 6679d00fcca625d8c75fe71448c5d97715b0af6f
+  commit: 00cc716eabc08b51faa90fce378057356063a5bc
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

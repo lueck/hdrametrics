@@ -12,12 +12,12 @@ packages:
     version: 0.1.0.0
     git: https://github.com/dracor-org/hdracor.git
     pantry-tree:
-      size: 2783
-      sha256: f009533a45e53705bbfba3f45839124b82dcc09dafafe9d9ca1da618c3fe3e67
-    commit: 6679d00fcca625d8c75fe71448c5d97715b0af6f
+      size: 3045
+      sha256: 6a5fed36ef491a86ec29544945b1cda84c2e40358546d4c28f59fb1ba16dc7bd
+    commit: 00cc716eabc08b51faa90fce378057356063a5bc
   original:
     git: https://github.com/dracor-org/hdracor.git
-    commit: 6679d00fcca625d8c75fe71448c5d97715b0af6f
+    commit: 00cc716eabc08b51faa90fce378057356063a5bc
 snapshots:
 - completed:
     size: 524154

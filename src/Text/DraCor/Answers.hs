@@ -6,9 +6,7 @@ module Text.DraCor.Answers
 -- answered to an other character or started a scene (a
 -- conversation). Note, that this measure is directed.
 
-import qualified Data.HashMap.Lazy as Map
 import Data.Hashable (Hashable)
-import Data.List
 
 import Text.DraCor.FoldPlay
 
@@ -18,4 +16,4 @@ import Text.DraCor.FoldPlay
 answers :: (Hashable a, Ord a) =>
            [[a]]         -- ^ scenes with speaking characters in order
         -> [([a], Int)]
-answers = foldPlayWithWindow 2 1 (+)
+answers = foldPlayWithWindow 2 1 (+) id
