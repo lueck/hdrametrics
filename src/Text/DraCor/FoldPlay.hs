@@ -29,9 +29,17 @@ import Data.List
 
 -- * Folding a play using a predicate
 
--- | Calculate the metrics based on a given predicate like
--- 'concomitanceP'. This is essentially a fold on the scenes of the
--- play.
+-- | This fold operates on the scenes as a whole and calculates
+-- metrics based on a predicate like 'cooccurrenceP', 'concomitanceP'
+-- or 'dominanceP'. It can be used for counting occurrences or
+-- absences of single characters or sets of characters in a scene. The
+-- characters present on each scene must be given as the last
+-- argument. The third argument, the list of sets of characters, also
+-- determines the type of measure, that is calculated. For set with
+-- the cardinal number of one can be used to count the pure presence
+-- or absence of each character per scene. For set with higher
+-- cardinality, combinations of characters can be counted, like
+-- cooccurrence or concomitance.
 foldPlayWithPredicate
   :: (Num i) =>
      ([a] -> [a] -> Bool)                       -- ^ metrics predicate
@@ -102,12 +110,12 @@ nonePresent scene set = foldl (\acc c -> acc && (not $ c `elem` scene)) True set
 -- >>> foldPlayWithWindow 3 (const 1) (+) firstAndLast [[1, 2, 3, 1, 2, 1, 2, 3, 1, 3, 1]]
 -- [([1],3),([-1],6),([2],1),([3],1)]
 --
--- Note that the count for character 1 is to high by 1. This results
+-- Note that the count for character 1 is too high by 1. This results
 -- from the beginning and the construction of the window there: For
 -- the first step, the window size is still only 1 and character 1 is
 -- the first and last character in this window. You can fix this by
 -- checking the window size in the function for representing the
--- window. See unit tests for an example.
+-- window. See 'atomicDialogues' for an example.
 --
 -- Please note that you can even pass in complete speach records and
 -- then have the function for representing the window get the
@@ -127,7 +135,7 @@ foldPlayWithWindow winSize mf af wf speaches =
   foldl1 (Map.unionWith af) $
   map (snd . (foldl updAggregation ([], Map.empty))) speaches
   where
-    -- incAnswers :: (Num i) => ([a], Map.HashMap [a] i) -> a -> ([a], Map.HashMap [a] i)
+    -- updAggregation :: ([a], Map.HashMap [b] i) -> a -> ([a], Map.HashMap [b] i)
     updAggregation (spoken, aggregation) current =
       (take (winSize - 1) window, Map.insertWith af (wf window) (mf window) aggregation)
       where

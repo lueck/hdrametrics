@@ -94,9 +94,35 @@ test_foldPlayWithPredicateAllPresent = do
               ,[1,2,3]
               ]::[[Int]]) ([[1,2,4], [1,3], [2,4], [3,4]]::[[Int]])
 
+
+-- * foldPlayWithWindow
+
+-- test_foldPlayWithWindow_empty = do
+--   assertRaises
+--     "throw exception"
+--     (Exception "Prelude.head: empty list")
+--     (foldPlayWithWindow 1 (const 1) (+) id [])
+
+test_foldPlayWithWindow_nestedEmpty = do
+  assertEqual ([]::[([Int], Int)]) $
+    foldPlayWithWindow 1 (const 1) (+) id [[]]
+
+test_foldPlayWithWindow_nestedEmpty' = do
+  assertEqual ([]::[([Int], Int)]) $
+    foldPlayWithWindow 5 (const 1) (+) id [[]]
+
+test_foldPlayWithWindow_count = do
+  assertEqual ([([1],7),([4],2),([2],3),([3],4)]::[([Int], Int)]) $
+    foldPlayWithWindow 1 (const 1) (+) id [[1, 2, 3, 1, 2, 1, 2, 3, 1, 3, 1], [1, 3, 4, 1, 4]]
+
 test_foldPlayWithWindow_answers = do
   assertEqual ([([2,1],3),([3,1],1),([1],1),([1,2],1),([1,3],3),([3,2],2)]::[([Int], Int)]) $
     foldPlayWithWindow 2 (const 1) (+) id [[1, 2, 3, 1, 2, 1, 2, 3, 1, 3, 1]]
+
+test_foldPlayWithWindow_answers' = do
+  assertEqual ([([4,3],1),([2,1],3),([3,1],2),([1],2),([4,1],1)
+               ,([1,4],1),([1,2],1),([1,3],3),([3,2],2)]::[([Int], Int)]) $
+    foldPlayWithWindow 2 (const 1) (+) id [[1, 2, 3, 1, 2, 1, 2, 3, 1, 3, 1], [1, 3, 4, 1, 4]]
 
 test_foldPlayWithWindow_dialogues = do
   let firstAndLast xs = if ((head xs) == (last xs)) then [head xs] else [-1]
