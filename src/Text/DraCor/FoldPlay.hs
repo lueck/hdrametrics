@@ -40,6 +40,7 @@ import Data.List
 -- or absence of each character per scene. For set with higher
 -- cardinality, combinations of characters can be counted, like
 -- cooccurrence or concomitance.
+
 foldPlayWithPredicate
   :: (Num i) =>
      ([a] -> [a] -> Bool)                       -- ^ metrics predicate
@@ -47,11 +48,22 @@ foldPlayWithPredicate
   -> [[a]] -- ^ set of character sets for which to calculate the metric
   -> [[a]] -- ^ scenes with present characters
   -> [([a], i)]
-foldPlayWithPredicate p normFun charSets scenes =
-  map (normFun charSets scenes) $
-  foldl incInScene (zip charSets (repeat 0)) scenes
+foldPlayWithPredicate = foldPlayWithPredicate'' fromEnum 0 (+)
+
+foldPlayWithPredicate''
+  :: (Bool -> b)                                -- ^ bool casting function, e.g. 'fromEnum'
+  -> b                                          -- ^ initial value
+  -> (b -> b -> b)                              -- ^ aggregation function
+  -> ([a] -> [a] -> Bool)                       -- ^ metrics predicate
+  -> ([[a]] -> [[a]] -> ([a], b) -> ([a], c)) -- ^ normalization function
+  -> [[a]] -- ^ set of character sets for which to calculate the metric
+  -> [[a]] -- ^ scenes with present characters
+  -> [([a], c)]
+foldPlayWithPredicate'' boolCast initVal af p nf charSets scenes =
+  map (nf charSets scenes) $
+  foldl incInScene (zip charSets (repeat initVal)) scenes
   where
-    incInScene acc scene = map (\(cs, v) -> (cs, (v + (fromEnum $ p scene cs)))) acc
+    incInScene acc scene = map (\(cs, v) -> (cs, (af v (boolCast $ p scene cs)))) acc
 
 
 -- | Same as 'foldPlayWith', but based on hashmap, which is not
