@@ -9,7 +9,7 @@ import Text.DraCor.FoldPlay
 import Text.DraCor.Cooccurrence
 
 test_foldPlayWithPredicateCooccurrence = do
-  let foldPlay = foldPlayWithPredicate cooccurrenceP normalizeWithScenesCount :: Fractional i => ([[Int]] -> [[Int]] -> [([Int], i)])
+  let foldPlay = foldPlayWithPredicateToNum cooccurrenceP normalizeWithScenesCount :: Fractional i => ([[Int]] -> [[Int]] -> [([Int], i)])
   assertEqual [([1,2], 1)] $
     foldPlay ([[1,2]]::[[Int]]) ([[1,2]]::[[Int]])
   assertEqual [([1,2], 0.5)] $

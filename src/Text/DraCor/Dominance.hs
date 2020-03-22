@@ -20,7 +20,9 @@ import Text.DraCor.FoldPlay
 -- there will be a runtime exception.
 --
 -- Usage:
--- @foldPlayWithPredicate normalizeWithScenesCount dominanceP characterSets scenes@
+-- @foldPlayWithPredicate id True (&&) dominanceP characterSets scenes@
+--
+-- @foldPlayWithPredicateToNum normalizeWithScenesCount dominanceP characterSets scenes@
 dominanceP
   :: (Eq a) =>
      [a]            -- ^ characters in scene

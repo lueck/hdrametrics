@@ -17,7 +17,9 @@ import Text.DraCor.FoldPlay
 -- graph-based drama analysis.
 --
 -- Usage:
--- @foldPlayWithPredicate normalizeWithScenesCount cooccurrenceP characterSets scenes@
+-- @foldPlayWithPredicate id True (&&) cooccurrenceP characterSets scenes@
+--
+-- @foldPlayWithPredicateToNum normalizeWithScenesCount cooccurrenceP characterSets scenes@
 cooccurrenceP
   :: (Eq a) =>
      [a]            -- ^ characters in scene

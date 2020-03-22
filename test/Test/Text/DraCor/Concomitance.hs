@@ -8,7 +8,7 @@ import Text.DraCor.FoldPlay
 import Text.DraCor.Concomitance
 
 test_foldPlayWithPredicateConcomitance = do
-  let foldPlay = foldPlayWithPredicate concomitanceP normalizeWithScenesCount :: Fractional i => ([[Int]] -> [[Int]] -> [([Int], i)])
+  let foldPlay = foldPlayWithPredicateToNum concomitanceP normalizeWithScenesCount :: Fractional i => ([[Int]] -> [[Int]] -> [([Int], i)])
   assertEqual [([1,2], 1)] $
     foldPlay ([[1,2]]::[[Int]]) ([[1,2]]::[[Int]])
   assertEqual [([1,2], 0.5)] $

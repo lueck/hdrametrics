@@ -1,5 +1,6 @@
 module Text.DraCor.FoldPlay
   ( foldPlayWithPredicate
+  , foldPlayWithPredicateToNum
   , foldPlayWithPredicate'
   , allPresent
   , nonePresent
@@ -11,12 +12,11 @@ module Text.DraCor.FoldPlay
   , longerThanOne
   ) where
 
--- | This module defines generic basic functions for analyzing
+-- | This module defines generic higher order functions for analyzing
 -- dramatic texts. They are basically folds on the scenes of a
 -- play. The functions can be used with various other simple functions
 -- for calculating specific metrics. So writing metrics is a
--- composition of higher order functions, of folds and simple other
--- functions.
+-- composition of folds and simple other functions.
 --
 -- The functions are also generic in the sense, that characters
 -- etc. may be represented by integers or even 8-bit words instead of
@@ -29,44 +29,60 @@ import Data.List
 
 -- * Folding a play using a predicate
 
--- | This fold operates on the scenes as a whole and calculates
--- metrics based on a predicate like 'cooccurrenceP', 'concomitanceP'
--- or 'dominanceP'. It can be used for counting occurrences or
--- absences of single characters or sets of characters in a scene. The
--- characters present on each scene must be given as the last
--- argument. The third argument, the list of sets of characters, also
--- determines the type of measure, that is calculated. For set with
--- the cardinal number of one can be used to count the pure presence
--- or absence of each character per scene. For set with higher
--- cardinality, combinations of characters can be counted, like
--- cooccurrence or concomitance.
-
+-- | This is a generic fold that operates on the scenes as a whole and
+-- calculates metrics based on a predicate like 'cooccurrenceP',
+-- 'concomitanceP' or 'dominanceP'. Depending on the bool casting
+-- function, the initial value and the aggregation function it can be
+-- used for calculating binary or numerical values.
+--
+-- Binary: @ foldPlayWithPredicate id True (&&) concomitanceP @ will
+-- calculate the concomitance of characters of a play like defined by
+-- Solomon Marcus, who had binary values in mind: Two characters are
+-- either concomitant or not.
+--
+-- Numerical: @ foldPlayWithPredicate fromEnum 0 (+) concomitanceP @
+-- will calculate a numerical concomitance value for two characters
+-- (or any set of characters). This way concomitance can be
+-- interpreted not binary, but as a conditional probability of two
+-- characters (or a set of characters), provided that the value is
+-- mapped to the interval of [0,1] by a normalization function. See
+-- 'foldPlayWithPredicateToNum' for a conveniant function composition.
+--
+-- The last two arguments: The characters present on each scene must
+-- be given as the last argument. The butlast argument, the list of
+-- sets of characters, also determines the type of measure, that is
+-- calculated. For set with the cardinal number of one can be used to
+-- count the pure presence or absence of each character per scene. For
+-- set with higher cardinality, combinations of characters can be
+-- counted, like cooccurrence or concomitance.
 foldPlayWithPredicate
+  :: (Bool -> b)                                -- ^ bool casting function, e.g. 'fromEnum'
+  -> b                                          -- ^ initial value
+  -> (b -> b -> b)                              -- ^ aggregation function
+  -> ([a] -> [a] -> Bool)                       -- ^ metrics predicate
+  -> [[a]] -- ^ set of character sets for which to calculate the metric
+  -> [[a]] -- ^ scenes with present characters
+  -> [([a], b)]
+foldPlayWithPredicate boolCast initVal af p charSets scenes =
+  foldl incInScene (zip charSets (repeat initVal)) scenes
+  where
+    incInScene acc scene = map (\(cs, v) -> (cs, (af v (boolCast $ p scene cs)))) acc
+
+-- | Like 'foldPlayWithPredicate', but for calculating numerical
+-- values, which are passed to a normalization function.
+foldPlayWithPredicateToNum
   :: (Num i) =>
      ([a] -> [a] -> Bool)                       -- ^ metrics predicate
   -> ([[a]] -> [[a]] -> ([a], Int) -> ([a], i)) -- ^ normalization function
   -> [[a]] -- ^ set of character sets for which to calculate the metric
   -> [[a]] -- ^ scenes with present characters
   -> [([a], i)]
-foldPlayWithPredicate = foldPlayWithPredicate'' fromEnum 0 (+)
-
-foldPlayWithPredicate''
-  :: (Bool -> b)                                -- ^ bool casting function, e.g. 'fromEnum'
-  -> b                                          -- ^ initial value
-  -> (b -> b -> b)                              -- ^ aggregation function
-  -> ([a] -> [a] -> Bool)                       -- ^ metrics predicate
-  -> ([[a]] -> [[a]] -> ([a], b) -> ([a], c)) -- ^ normalization function
-  -> [[a]] -- ^ set of character sets for which to calculate the metric
-  -> [[a]] -- ^ scenes with present characters
-  -> [([a], c)]
-foldPlayWithPredicate'' boolCast initVal af p nf charSets scenes =
+foldPlayWithPredicateToNum p nf charSets scenes =
   map (nf charSets scenes) $
-  foldl incInScene (zip charSets (repeat initVal)) scenes
-  where
-    incInScene acc scene = map (\(cs, v) -> (cs, (af v (boolCast $ p scene cs)))) acc
+  foldPlayWithPredicate fromEnum 0 (+) p charSets scenes
 
 
--- | Same as 'foldPlayWith', but based on hashmap, which is not
+-- | Same as 'foldPlayWithToNum', but based on hashmap, which is not
 -- needed, because we do not lookup anything, but instead map over the
 -- whole hashmap. So this is not faster, but a magnitude slower.
 foldPlayWithPredicate'

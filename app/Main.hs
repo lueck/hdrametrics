@@ -233,7 +233,7 @@ concomitanceLikePlay predicate mkPowerSet gOpts cOpts = do
       normFun = if (concAbsoluteValues cOpts)
         then absoluteFrequency'
         else normalizeWithScenesCount
-      concomitanceValues = foldPlayWithPredicate predicate normFun intSets sceneInts
+      concomitanceValues = foldPlayWithPredicateToNum predicate normFun intSets sceneInts
       out = sortBy (concSortedBy cOpts) $ -- sortOn (sortOrder $ concSortedBy cOpts) $
         filter ((\v -> v >= (concLowerBoundConc cOpts) &&
                        v <= (concUpperBoundConc cOpts)) . snd) $

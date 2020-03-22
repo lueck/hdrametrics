@@ -15,7 +15,10 @@ import Text.DraCor.FoldPlay
 -- more characters using 'foldPlayWithPredicate'.
 --
 -- Usage:
--- @foldPlayWithPredicate normalizeWithScenesCount concomitanceP characterSets scenes@
+-- @foldPlayWithPredicate id True (&&) concomitanceP characterSets scenes@
+--
+-- @foldPlayWithPredicateToNum normalizeWithScenesCount concomitanceP characterSets scenes@
+
 concomitanceP
   :: (Eq a) =>
      [a]            -- ^ characters in scene

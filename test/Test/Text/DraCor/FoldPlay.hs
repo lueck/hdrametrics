@@ -56,19 +56,19 @@ prop_subsequencesOfSizeN' (NonNegative l) (xs :: [Int]) =
   (filter ((<=l) . length) $ subsequences $ take 10 xs) \\ (subsequencesOfSize l (take 10 xs)) == []
 
 
-test_foldPlayWithPredicateNoCharsNoScenes = do
-  assertEqual [] $ foldPlayWithPredicate allPresent normalizeWithScenesCount ([]::[[Int]]) ([]::[[Int]])
+test_foldPlayWithPredicateToNumNoCharsNoScenes = do
+  assertEqual [] $ foldPlayWithPredicateToNum allPresent normalizeWithScenesCount ([]::[[Int]]) ([]::[[Int]])
 
-test_foldPlayWithPredicateNoScenes = do
+test_foldPlayWithPredicateToNumNoScenes = do
   unitTestPending "division by zero when no scenes"
-  assertEqual [([1,2], 0)] $ foldPlayWithPredicate allPresent normalizeWithScenesCount ([[1,2]]::[[Int]]) ([]::[[Int]])
+  assertEqual [([1,2], 0)] $ foldPlayWithPredicateToNum allPresent normalizeWithScenesCount ([[1,2]]::[[Int]]) ([]::[[Int]])
 
-test_foldPlayWithPredicateNoChars = do
-  assertEqual [] $ foldPlayWithPredicate allPresent normalizeWithScenesCount ([]::[[Int]]) ([[1,2]]::[[Int]])
+test_foldPlayWithPredicateToNumNoChars = do
+  assertEqual [] $ foldPlayWithPredicateToNum allPresent normalizeWithScenesCount ([]::[[Int]]) ([[1,2]]::[[Int]])
 
 
-test_foldPlayWithPredicateAllPresent = do
-  let foldPlay = foldPlayWithPredicate allPresent normalizeWithScenesCount :: Fractional i => ([[Int]] -> [[Int]] -> [([Int], i)])
+test_foldPlayWithPredicateToNumAllPresent = do
+  let foldPlay = foldPlayWithPredicateToNum allPresent normalizeWithScenesCount :: Fractional i => ([[Int]] -> [[Int]] -> [([Int], i)])
   assertEqual [([1,2], 1)] $
     foldPlay ([[1,2]]::[[Int]]) ([[1,2]]::[[Int]])
   assertEqual [([1,2], 0.5)] $
