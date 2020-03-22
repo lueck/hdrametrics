@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: bf0d9f8c4f79ac0a1af38d97753e1c1664f7af3f217f6b2f9e6c6bc6692488fb
+-- hash: 1609133cc719a9cd4ac27631a1e8f415d2ccf9782dc559afc536bed57333c700
 
 name:           hdrametrics
 version:        0.1.0.0
@@ -27,7 +27,6 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
       Text.DraCor.Answers
       Text.DraCor.Concomitance
       Text.DraCor.Cooccurrence
