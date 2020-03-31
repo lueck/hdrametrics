@@ -1,7 +1,7 @@
 module Text.DraCor.Dialogue where
 
 -- | This module defines functions for counting dialogue-like
--- structures from a play.
+-- structures in a play.
 
 import Data.Hashable (Hashable)
 
