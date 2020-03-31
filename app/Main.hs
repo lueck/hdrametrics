@@ -32,11 +32,15 @@ data Opts = Opts
 
 data DataSource
   = DraCorAPI
-  { url :: String
-  , corpus :: String
-  , play :: String
-  }
+    { url :: String
+    , corpus :: String
+    , play :: String
+    }
   | ThreadUsersCSV String
+  | IntegerCsv
+    { scenesCsv :: String
+    , charsCsv :: String
+    }
 
 data Output = Raw | JSON | CSV
 
@@ -72,7 +76,9 @@ opts_ = Opts
        (ThreadUsersCSV <$> strOption
          (long "thread-users-csv"
           <> help "Get scenes from a CSV file."
-          <> metavar "FILENAME")))
+          <> metavar "FILENAME"))
+       <|>
+       integerCsv_)
   <*> ((flag Raw Raw
         (long "raw"
          <> help "Raw haskell output"))
@@ -120,7 +126,14 @@ dracor_ = DraCorAPI
                  <> help "The identifier of the play."
                  <> metavar "PLAY")
 
-
+integerCsv_ :: Parser DataSource
+integerCsv_ = IntegerCsv
+  <$> strOption (long "scenes-int-csv"
+                 <> help "An integer representation of the characters present in scenes given in a CSV file."
+                 <> metavar "FILENAME")
+  <*> strOption (long "characters-ints"
+                 <> help "A list of integers representing the characters of a play given. The integers must be separated by whitespace."
+                 <> metavar "FILENAME")
 
 concomitanceLike_ :: String -> (Int -> Float -> Float -> Bool -> SortOrder -> Command) -> Parser Command
 concomitanceLike_ helpStr constructor = constructor
@@ -193,18 +206,44 @@ run gOpts@(Opts _ _ cOpts@(Cooccurrence card _ _ _ _)) =
   ((filter longerThanOne) . (subsequencesOfSize card))
   gOpts cOpts
 
-scenes :: Opts -> IO [[T.Text]]
+scenes :: Opts -> IO ([[Int]], [Int], (Int -> T.Text))
 scenes gOpts@(Opts (DraCorAPI url corpus play) _ _) = do
   ply' <- getPlay (fetch url) corpus play
   case ply' of
     Nothing -> do
       fail "Fatal: Could not parse JSON data"
     Just ply -> do
-      return $ map scnSpeakers $ plySegments ply
+      return $ mkIntRepresentation $ map scnSpeakers $ plySegments ply
 scenes (Opts (ThreadUsersCSV fName) _ _) = do
   c <- B.readFile fName
   let csvOpts = Csv.defaultDecodeOptions { Csv.decDelimiter = fromIntegral (ord ',') }
   case (Csv.decodeWith csvOpts Csv.HasHeader c :: Either String (V.Vector (T.Text, T.Text))) of
+    Left err -> do
+      fail err
+    Right speakers -> do
+      return $ mkIntRepresentation $
+        snd $ V.foldl
+        (\(lastThread, acc@(xs:xss)) (newThread, speaker) ->
+           (if newThread==lastThread
+            then (newThread, (speaker:xs):xss)
+            else (newThread, [speaker]:acc)))
+        ("", [[]])
+        speakers
+scenes (Opts (IntegerCsv scns chars) _ _) = do
+  s <- readIntScenes scns
+  charsH <- openFile chars ReadMode
+  contents <- hGetContents charsH
+  let nums = f (words contents)
+  return (s, nums, (T.pack . show))
+  where
+    f :: [String] -> [Int]
+    f = map read
+
+readIntScenes :: String -> IO ([[Int]])
+readIntScenes scns = do
+  s <- B.readFile scns
+  let csvOpts = Csv.defaultDecodeOptions { Csv.decDelimiter = fromIntegral (ord ',') }
+  case (Csv.decodeWith csvOpts Csv.HasHeader s :: Either String (V.Vector (Int, Int))) of
     Left err -> do
       fail err
     Right speakers -> do
@@ -213,34 +252,41 @@ scenes (Opts (ThreadUsersCSV fName) _ _) = do
            (if newThread==lastThread
             then (newThread, (speaker:xs):xss)
             else (newThread, [speaker]:acc)))
-        ("", [[]])
+        ((-1), [[]])
         speakers
+
+mkIntRepresentation :: [[T.Text]] -> ([[Int]], [Int], (Int -> T.Text))
+mkIntRepresentation scns =
+  ( (map (map getInt) scns)
+  , [1..(length characters)]
+  , (characterMap IntMap.!)
+  )
+  where
+    characters :: [T.Text]
+    characters = nub $ concat scns
+    characterIntTuples :: [(Int, T.Text)]
+    characterIntTuples = zip [1..] characters
+    getInt :: T.Text -> Int
+    getInt c = fst $ head $ filter ((==c) . snd) characterIntTuples
+    characterMap :: IntMap.IntMap T.Text
+    characterMap = IntMap.fromList $ characterIntTuples
 
 -- concomitanceLikePlay :: Eq a => ([a] -> [a] -> Bool) -> Opts -> Command -> IO ()
 concomitanceLikePlay predicate mkPowerSet gOpts cOpts = do
-  scns <- scenes gOpts
-  let characters = nub $ concat scns
-      -- characterSets = filter ((\l -> l>=2 && l<=(concMaxCardinalNum cOpts)) . length) $
-      --   subsequences characters
-      -- characterSets = mkPowerSet characters
-      -- mapping of strings to integers
-      characterIntTuples = zip [1..] characters
-      getInt c = fst $ head $ filter ((==c) . snd) characterIntTuples
-      characterMap = IntMap.fromList $ characterIntTuples
-      sceneInts = map (map getInt) scns
-      intSets = mkPowerSet [1..(length characters)]
+  (scns, chars, int2Name) <- scenes gOpts
+  let intSets = mkPowerSet chars
       -- calculate
       normFun = if (concAbsoluteValues cOpts)
         then absoluteFrequency'
         else normalizeWithScenesCount
-      concomitanceValues = foldPlayWithPredicateToNum predicate normFun intSets sceneInts
+      concomitanceValues = foldPlayWithPredicateToNum predicate normFun intSets scns
       out = sortBy (concSortedBy cOpts) $ -- sortOn (sortOrder $ concSortedBy cOpts) $
         filter ((\v -> v >= (concLowerBoundConc cOpts) &&
                        v <= (concUpperBoundConc cOpts)) . snd) $
-        map (\(is, v) -> ((map (characterMap IntMap.!) is), v))
+        map (\(is, v) -> ((map int2Name is), v))
         concomitanceValues
   hPutStrLn stderr $ "Found scenes: " ++ (show $ length scns)
-  hPutStrLn stderr $ "Found characters: " ++ (show $ length characters)
+  hPutStrLn stderr $ "Found characters: " ++ (show $ length chars)
   hPutStrLn stderr $ "Size of generated powerset of characters: " ++ (show $ length intSets)
   output gOpts out
   where
