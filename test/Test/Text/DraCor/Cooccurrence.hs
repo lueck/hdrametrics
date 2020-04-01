@@ -4,7 +4,7 @@ module Test.Text.DraCor.Cooccurrence where
 
 import Test.Framework
 import Data.List
-import qualified Data.HashMap.Lazy as Map
+import qualified Data.HashMap.Strict as Map
 
 import Text.DraCor.FoldPlay
 import Text.DraCor.Cooccurrence
@@ -61,17 +61,17 @@ test_cooccurrenceMapping = do
   assertEqual 0 $ length
     (Map.difference
       (Map.fromList [([1,2],1), ([1,3],1), ([2,3],1)])
-      (cooccurrenceMapping 2 ([1,2,3]::[Int]))
+      (cooccurrenceMapping (map sort) 2 ([1,2,3]::[Int]))
     )
   assertEqual 0 $ length
     (Map.difference
-      (cooccurrenceMapping 2 ([1,2,3]::[Int]))
+      (cooccurrenceMapping (map sort) 2 ([1,2,3]::[Int]))
       (Map.fromList [([1,2],1), ([1,3],1), ([2,3],1)])
     )
 
 prop_cooccurrenceMappingLength :: [Int] -> Bool
 prop_cooccurrenceMappingLength chars =
-  (Map.size $ cooccurrenceMapping 2 chars') ==
+  (Map.size $ cooccurrenceMapping (map sort) 2 chars') ==
   (length $ filter longerThanOne $ subsequencesOfSize 2 chars')
   where
     -- Should nub be moved to cooccurrenceMapping? No, because that
@@ -85,15 +85,15 @@ test_cooccurrenceMappingDuplicates = do
   assertEqual 0 $ length
     (Map.difference
       (Map.fromList [([1,2],1), ([1,3],1), ([2,3],1), ([1,1],1)])
-      (cooccurrenceMapping 2 ([1,2,3,1]::[Int]))
+      (cooccurrenceMapping (map sort) 2 ([1,2,3,1]::[Int]))
     )
   assertEqual 0 $ length
     (Map.difference
-      (cooccurrenceMapping 2 ([1,2,3,1]::[Int]))
+      (cooccurrenceMapping (map sort) 2 ([1,2,3,1]::[Int]))
       (Map.fromList [([1,2],1), ([1,3],1), ([2,3],1), ([1,1],1)])
     )
 
 
 -- corner case
 test_cooccurrenceMappingEmpty = do
-  assertEqual (Map.empty :: Map.HashMap [Int] Int) $ cooccurrenceMapping 2 []
+  assertEqual (Map.empty :: Map.HashMap [Int] Int) $ cooccurrenceMapping (map sort) 2 []

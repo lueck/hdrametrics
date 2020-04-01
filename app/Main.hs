@@ -203,7 +203,7 @@ run gOpts@(Opts _ _ cOpts@(Dominance card _ _ _ _)) =
 run gOpts@(Opts _ _ cOpts@(Cooccurrence card _ _ _ _)) =
   concomitanceLikePlay
   --(foldPlayWithPredicateToNum cooccurrenceP)
-  (foldPlayWithMapping (cooccurrenceMapping (map sort) 2) (+))
+  (foldPlayWithMapping (cooccurrenceMapping (concat . (map permutations)) 2) (+)) -- (map sort) 2) (+))
   ((filter longerThanOne) . (subsequencesOfSize card))
   gOpts cOpts
 

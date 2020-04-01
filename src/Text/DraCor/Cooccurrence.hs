@@ -12,7 +12,7 @@ import Data.List
 import Text.DraCor.FoldPlay
 
 import Data.Hashable (Hashable)
-import qualified Data.HashMap.Lazy as Map
+import qualified Data.HashMap.Strict as Map
 
 
 -- | A predicate for calculating the cooccurence of two characters or
@@ -82,8 +82,8 @@ cooccurrenceMapping
   -> [a]                        -- ^ characters in the scene
   -> Map.HashMap [a] Int
 cooccurrenceMapping sortFun cardinality chars =
-  Map.fromList $
-  flip zip (repeat 1) $
-  sortFun $
-  filter longerThanOne $
+  Map.fromList $!
+  flip zip (repeat 1) $!
+  sortFun $!
+  filter longerThanOne $!
   subsequencesOfSize cardinality chars

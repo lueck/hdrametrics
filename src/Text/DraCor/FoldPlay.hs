@@ -23,7 +23,7 @@ module Text.DraCor.FoldPlay
 -- etc. may be represented by integers or even 8-bit words instead of
 -- strings. This may have a boost on performance.
 
-import qualified Data.HashMap.Lazy as Map
+import qualified Data.HashMap.Strict as Map
 import Data.Hashable (Hashable)
 import Data.List
 
@@ -132,7 +132,7 @@ foldPlayWithMapping mapFun aggFun normFun charSets scenes =
   Map.toList $ -- return a list of tuples
   Map.mapWithKey (curry (snd . (normFun charSets scenes))) $ -- devide by count of scenes or so
   Map.unionWith (+) (Map.fromList $ zip charSets $ repeat 0) $ -- add zeros
-  foldl accMappings Map.empty scenes                           -- fold scenes
+  foldl' accMappings Map.empty scenes                           -- fold scenes
   where
     -- accMappings :: Map.HashMap [a] Int -> [a] -> Map.HashMap [a] Int
     accMappings acc chars = Map.unionWith aggFun acc $ mapFun chars
