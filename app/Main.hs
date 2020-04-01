@@ -192,17 +192,18 @@ fetch url path = simpleHttp $ url ++ path
 run :: Opts -> IO ()
 run gOpts@(Opts _ _ cOpts@(Concomitance card _ _ _ _)) =
   concomitanceLikePlay
-  concomitanceP
+  (foldPlayWithPredicateToNum concomitanceP)
   ((filter longerThanOne) . (subsequencesOfSize card))
   gOpts cOpts
 run gOpts@(Opts _ _ cOpts@(Dominance card _ _ _ _)) =
   concomitanceLikePlay
-  dominanceP
+  (foldPlayWithPredicateToNum dominanceP)
   (concat . (map permutations) . (filter longerThanOne) . (subsequencesOfSize card))
   gOpts cOpts
 run gOpts@(Opts _ _ cOpts@(Cooccurrence card _ _ _ _)) =
   concomitanceLikePlay
-  cooccurrenceP
+  --(foldPlayWithPredicateToNum cooccurrenceP)
+  (foldPlayWithMapping (cooccurrenceMapping (map sort) 2) (+))
   ((filter longerThanOne) . (subsequencesOfSize card))
   gOpts cOpts
 
@@ -272,14 +273,14 @@ mkIntRepresentation scns =
     characterMap = IntMap.fromList $ characterIntTuples
 
 -- concomitanceLikePlay :: Eq a => ([a] -> [a] -> Bool) -> Opts -> Command -> IO ()
-concomitanceLikePlay predicate mkPowerSet gOpts cOpts = do
+concomitanceLikePlay foldFun mkPowerSet gOpts cOpts = do
   (scns, chars, int2Name) <- scenes gOpts
   let intSets = mkPowerSet chars
       -- calculate
       normFun = if (concAbsoluteValues cOpts)
         then absoluteFrequency'
         else normalizeWithScenesCount
-      concomitanceValues = foldPlayWithPredicateToNum predicate normFun intSets scns
+      concomitanceValues = foldFun normFun intSets scns
       out = sortBy (concSortedBy cOpts) $ -- sortOn (sortOrder $ concSortedBy cOpts) $
         filter ((\v -> v >= (concLowerBoundConc cOpts) &&
                        v <= (concUpperBoundConc cOpts)) . snd) $

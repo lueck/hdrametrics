@@ -4,6 +4,7 @@ module Test.Text.DraCor.Cooccurrence where
 
 import Test.Framework
 import Data.List
+import qualified Data.HashMap.Lazy as Map
 
 import Text.DraCor.FoldPlay
 import Text.DraCor.Cooccurrence
@@ -54,3 +55,45 @@ test_cooccurrenceP = do
 prop_cooccurrenceP :: [Int] -> [Int] -> Bool
 prop_cooccurrenceP a b =
   cooccurrenceP a b == cooccurrenceP' a b
+
+
+test_cooccurrenceMapping = do
+  assertEqual 0 $ length
+    (Map.difference
+      (Map.fromList [([1,2],1), ([1,3],1), ([2,3],1)])
+      (cooccurrenceMapping 2 ([1,2,3]::[Int]))
+    )
+  assertEqual 0 $ length
+    (Map.difference
+      (cooccurrenceMapping 2 ([1,2,3]::[Int]))
+      (Map.fromList [([1,2],1), ([1,3],1), ([2,3],1)])
+    )
+
+prop_cooccurrenceMappingLength :: [Int] -> Bool
+prop_cooccurrenceMappingLength chars =
+  (Map.size $ cooccurrenceMapping 2 chars') ==
+  (length $ filter longerThanOne $ subsequencesOfSize 2 chars')
+  where
+    -- Should nub be moved to cooccurrenceMapping? No, because that
+    -- would eleminate combinations of a character with itself. For
+    -- plays, this cyclic feature would not be a disadvantage, but for
+    -- folding over sentences it would. See
+    -- test_cooccurrenceMappingDuplicates.
+    chars' = nub chars
+
+test_cooccurrenceMappingDuplicates = do
+  assertEqual 0 $ length
+    (Map.difference
+      (Map.fromList [([1,2],1), ([1,3],1), ([2,3],1), ([1,1],1)])
+      (cooccurrenceMapping 2 ([1,2,3,1]::[Int]))
+    )
+  assertEqual 0 $ length
+    (Map.difference
+      (cooccurrenceMapping 2 ([1,2,3,1]::[Int]))
+      (Map.fromList [([1,2],1), ([1,3],1), ([2,3],1), ([1,1],1)])
+    )
+
+
+-- corner case
+test_cooccurrenceMappingEmpty = do
+  assertEqual (Map.empty :: Map.HashMap [Int] Int) $ cooccurrenceMapping 2 []

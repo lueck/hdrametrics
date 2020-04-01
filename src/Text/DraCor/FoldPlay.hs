@@ -4,6 +4,7 @@ module Text.DraCor.FoldPlay
   , foldPlayWithPredicate'
   , allPresent
   , nonePresent
+  , foldPlayWithMapping
   , foldPlayWithWindow
   , normalizeWithScenesCount
   , absoluteFrequency
@@ -115,6 +116,26 @@ allPresent scene set = foldl (\acc c -> acc && (c `elem` scene)) True set
 -- the scene.
 nonePresent :: (Eq a) => [a] -> [a] -> Bool
 nonePresent scene set = foldl (\acc c -> acc && (not $ c `elem` scene)) True set
+
+
+-- * Folding with a mapping
+
+foldPlayWithMapping
+  :: (Hashable a, Ord a, Num i) =>
+     ([a] -> Map.HashMap [a] Int) -- ^ metrics mapping function
+  -> (Int -> Int -> Int)                 -- ^ aggregation function
+  -> ([[a]] -> [[a]] -> ([a], Int) -> ([a], i)) -- ^ normalization function
+  -> [[a]] -- ^ set of character sets for which to calculate the metric
+  -> [[a]] -- ^ scenes with present characters
+  -> [([a], i)]
+foldPlayWithMapping mapFun aggFun normFun charSets scenes =
+  Map.toList $ -- return a list of tuples
+  Map.mapWithKey (curry (snd . (normFun charSets scenes))) $ -- devide by count of scenes or so
+  Map.unionWith (+) (Map.fromList $ zip charSets $ repeat 0) $ -- add zeros
+  foldl accMappings Map.empty scenes                           -- fold scenes
+  where
+    -- accMappings :: Map.HashMap [a] Int -> [a] -> Map.HashMap [a] Int
+    accMappings acc chars = Map.unionWith aggFun acc $ mapFun chars
 
 
 -- * Folding with a sliding window
